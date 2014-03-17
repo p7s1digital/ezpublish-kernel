@@ -9,6 +9,7 @@
 
 namespace eZ\Publish\Core\REST\Server\Controller;
 
+use eZ\Publish\API\Repository\Values\Content\ContentInfo;
 use eZ\Publish\Core\REST\Common\Message;
 use eZ\Publish\Core\REST\Common\Exceptions;
 use eZ\Publish\Core\REST\Server\Values;
@@ -27,6 +28,13 @@ use eZ\Publish\Core\REST\Server\Exceptions\BadRequestException;
  */
 class Content extends RestController
 {
+
+    private static $publicVersionStatuses = array(
+        VersionInfo::STATUS_DRAFT,
+        VersionInfo::STATUS_PUBLISHED,
+        VersionInfo::STATUS_ARCHIVED
+    );
+
     /**
      * Loads a content info by remote ID
      *
@@ -310,12 +318,35 @@ class Content extends RestController
      */
     public function loadContentVersions( $contentId )
     {
+        $contentInfo = $this->repository->getContentService()->loadContentInfo( $contentId );
+
         return new Values\VersionList(
-            $this->repository->getContentService()->loadVersions(
-                $this->repository->getContentService()->loadContentInfo( $contentId )
-            ),
+            $this->loadPublicContentVersions( $contentInfo ),
             $this->request->getPathInfo()
         );
+    }
+
+    /**
+     * Loads a list of all content versions and filters them to the
+     * public ones to be exposed.
+     *
+     * @param ContentInfo $contentInfo
+     *
+     * @return array
+     */
+    private function loadPublicContentVersions( $contentInfo )
+    {
+        $contentVersions = $this->repository->getContentService()->loadVersions( $contentInfo );
+
+        $result = array();
+        foreach ( $contentVersions as $contentVersion )
+        {
+            if ( in_array( $contentVersion->status, self::$publicVersionStatuses ) )
+            {
+                $result[] = $contentVersion;
+            }
+        }
+        return $result;
     }
 
     /**
