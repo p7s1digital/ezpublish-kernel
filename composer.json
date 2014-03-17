@@ -6,6 +6,12 @@
     "suggest": {
         "php-64bit": "For support of more than 30 languages, a 64bit php installation on all involved prod/dev machines is required"
     },
+    "repositories": [
+        {
+            "type": "composer",
+            "url" : "http://satis.dcp-tools-01.magic-technik.de"
+        }
+    ],
     "require": {
         "php": ">=5.3.3",
         "ext-ctype": "*",
