@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Persistence\InMemory\Tests\UserHandlerTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -608,11 +608,11 @@ class UserHandlerTest extends HandlerTest
     }
 
     /**
-     * Test removePolicy function
+     * Test deletePolicy function
      *
-     * @covers eZ\Publish\Core\Persistence\InMemory\UserHandler::removePolicy
+     * @covers eZ\Publish\Core\Persistence\InMemory\UserHandler::deletePolicy
      */
-    public function testRemovePolicy()
+    public function testDeletePolicy()
     {
         $handler = $this->persistenceHandler->userHandler();
         $obj = $handler->createRole( self::getRole() );
@@ -620,7 +620,7 @@ class UserHandlerTest extends HandlerTest
         $this->assertEquals( 3, count( $obj->policies ) );
         $id = $obj->id;
 
-        $handler->removePolicy( $id, $obj->policies[2]->id );
+        $handler->deletePolicy( $obj->policies[2]->id );
         $obj = $handler->loadRole( $id );
         $this->assertInstanceOf( 'eZ\\Publish\\SPI\\Persistence\\User\\Role', $obj );
         $this->assertEquals( 2, count( $obj->policies ) );

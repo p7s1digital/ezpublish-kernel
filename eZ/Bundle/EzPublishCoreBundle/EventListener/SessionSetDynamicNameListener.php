@@ -2,17 +2,19 @@
 /**
  * File containing the SessionSetDynamicNameListener class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Bundle\EzPublishCoreBundle\EventListener;
 
+use eZ\Publish\Core\MVC\ConfigResolverInterface;
 use eZ\Publish\Core\MVC\Symfony\MVCEvents;
 use eZ\Publish\Core\MVC\Symfony\Event\PostSiteAccessMatchEvent;
+use eZ\Bundle\EzPublishCoreBundle\Kernel;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
@@ -25,18 +27,25 @@ class SessionSetDynamicNameListener implements EventSubscriberInterface
     const MARKER = "{siteaccess_hash}";
 
     /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface
+     * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
      */
-    private $container;
+    private $configResolver;
 
     /**
-     * @note Injecting the service container is mandatory since event listeners are instantiated before siteaccess matching
-     *
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+     * @var \Symfony\Component\HttpFoundation\Session\SessionInterface|null
      */
-    public function __construct( ContainerInterface $container )
+    private $session;
+
+    /**
+     * @note Getting session from the container and not from the request because the session object is assigned to the request only when session has started.
+     *
+     * @param ConfigResolverInterface $configResolver
+     * @param SessionInterface $session
+     */
+    public function __construct( ConfigResolverInterface $configResolver, SessionInterface $session = null )
     {
-        $this->container = $container;
+        $this->configResolver = $configResolver;
+        $this->session = $session;
     }
 
     public static function getSubscribedEvents()
@@ -48,29 +57,33 @@ class SessionSetDynamicNameListener implements EventSubscriberInterface
 
     public function onSiteAccessMatch( PostSiteAccessMatchEvent $event )
     {
-        if ( !$this->container->has( 'session' ) || $event->getRequestType() !== HttpKernelInterface::MASTER_REQUEST )
+        if ( !isset( $this->session ) || $event->getRequestType() !== HttpKernelInterface::MASTER_REQUEST )
         {
             return;
         }
 
-        // Getting from the container and not from the request because the session object is assigned to the request only when session has started.
-        /** @var $session \Symfony\Component\HttpFoundation\Session\Session */
-        $session = $this->container->get( 'session' );
-
-        if ( !$session->isStarted() )
+        if ( !$this->session->isStarted() )
         {
-            $sessionName = $this->container->get( 'ezpublish.config.resolver' )->getParameter( 'session_name' );
+            $sessionName = $this->configResolver->getParameter( 'session_name' );
+            // Add session prefix if needed.
+            if ( strpos( $sessionName, Kernel::SESSION_NAME_PREFIX ) !== 0 )
+            {
+                $sessionName = Kernel::SESSION_NAME_PREFIX . '_' . $sessionName;
+            }
+
             if ( strpos( $sessionName, self::MARKER ) !== false )
             {
-                $session->setName(
+                $this->session->setName(
                     str_replace(
-                        self::MARKER, md5( $event->getSiteAccess()->name ), $sessionName
+                        self::MARKER,
+                        md5( $event->getSiteAccess()->name ),
+                        $sessionName
                     )
                 );
             }
             else
             {
-                $session->setName( $sessionName );
+                $this->session->setName( $sessionName );
             }
         }
     }

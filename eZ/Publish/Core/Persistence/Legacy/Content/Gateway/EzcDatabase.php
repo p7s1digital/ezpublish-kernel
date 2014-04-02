@@ -2,7 +2,7 @@
 /**
  * File containing the EzcDatabase content gateway class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -26,6 +26,7 @@ use eZ\Publish\SPI\Persistence\Content\Language\Handler as LanguageHandler;
 use eZ\Publish\Core\Base\Exceptions\NotFoundException as NotFound;
 use eZ\Publish\API\Repository\Values\Content\VersionInfo as APIVersionInfo;
 use ezcQueryUpdate;
+use ezcQuerySelect;
 use PDO;
 
 /**
@@ -1004,7 +1005,7 @@ class EzcDatabase extends Gateway
      * @param \ezcQuerySelect $query
      * @return string[][]
      */
-    private function listVersionsHelper( $query )
+    private function listVersionsHelper( ezcQuerySelect $query )
     {
         $query->orderBy(
             $this->dbHandler->quoteColumn( 'id', 'ezcontentobject_version' )

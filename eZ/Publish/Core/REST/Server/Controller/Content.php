@@ -2,7 +2,7 @@
 /**
  * File containing the Content controller class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -20,6 +20,7 @@ use eZ\Publish\API\Repository\Values\Content\VersionInfo;
 use eZ\Publish\API\Repository\Exceptions\NotFoundException;
 use eZ\Publish\API\Repository\Exceptions\ContentFieldValidationException;
 use eZ\Publish\API\Repository\Exceptions\ContentValidationException;
+use eZ\Publish\API\Repository\Exceptions\NotImplementedException;
 use eZ\Publish\Core\REST\Server\Exceptions\ForbiddenException;
 use eZ\Publish\Core\REST\Server\Exceptions\BadRequestException;
 
@@ -67,6 +68,8 @@ class Content extends RestController
      * Loads a content info, potentially with the current version embedded
      *
      * @param mixed $contentId
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     *
      * @return \eZ\Publish\Core\REST\Server\Values\RestContent
      */
     public function loadContent( $contentId )
@@ -95,13 +98,23 @@ class Content extends RestController
             $relations = $this->repository->getContentService()->loadRelations( $contentVersion->getVersionInfo() );
         }
 
-        return new Values\RestContent(
+        $restContent = new Values\RestContent(
             $contentInfo,
             $mainLocation,
             $contentVersion,
             $contentType,
             $relations,
             $this->request->getPathInfo()
+        );
+
+        if ( $contentInfo->mainLocationId === null )
+        {
+            return $restContent;
+        }
+
+        return new Values\CachedValue(
+            $restContent,
+            array( 'locationId' => $contentInfo->mainLocationId )
         );
     }
 
@@ -186,6 +199,7 @@ class Content extends RestController
      *
      * @param mixed $contentId
      * @param int $versionNumber
+     *
      * @return \eZ\Publish\Core\REST\Server\Values\Version
      */
     public function loadContentInVersion( $contentId, $versionNumber )
@@ -205,11 +219,21 @@ class Content extends RestController
             $content->getVersionInfo()->getContentInfo()->contentTypeId
         );
 
-        return new Values\Version(
+        $versionValue = new Values\Version(
             $content,
             $contentType,
             $this->repository->getContentService()->loadRelations( $content->getVersionInfo() ),
             $this->request->getPathInfo()
+        );
+
+        if ( $content->contentInfo->mainLocationId === null )
+        {
+            return $versionValue;
+        }
+
+        return new Values\CachedValue(
+            $versionValue,
+            array( 'locationId' => $content->contentInfo->mainLocationId )
         );
     }
 
@@ -293,7 +317,7 @@ class Content extends RestController
     /**
      * Creates a new content object as copy under the given parent location given in the destination header.
      *
-     * @param $contentId
+     * @param mixed $contentId
      *
      * @return \eZ\Publish\Core\REST\Server\Values\ResourceCreated
      */
@@ -320,6 +344,7 @@ class Content extends RestController
      * include fields and relations in the Version elements of the response.
      *
      * @param mixed $contentId
+     *
      * @return \eZ\Publish\Core\REST\Server\Values\VersionList
      */
     public function loadContentVersions( $contentId )
@@ -328,8 +353,6 @@ class Content extends RestController
 
         return new Values\VersionList(
             $this->loadPublicContentVersions( $contentInfo ),
-            $this->request->getPathInfo()
-        );
     }
 
     /**
@@ -583,11 +606,9 @@ class Content extends RestController
         $offset = $this->request->query->has( 'offset' ) ? (int)$this->request->query->get( 'offset' ) : 0;
         $limit = $this->request->query->has( 'limit' ) ? (int)$this->request->query->get( 'limit' ) : -1;
 
+        $contentInfo = $this->repository->getContentService()->loadContentInfo( $contentId );
         $relationList = $this->repository->getContentService()->loadRelations(
-            $this->repository->getContentService()->loadVersionInfo(
-                $this->repository->getContentService()->loadContentInfo( $contentId ),
-                $versionNumber
-            )
+            $this->repository->getContentService()->loadVersionInfo( $contentInfo, $versionNumber )
         );
 
         $relationList = array_slice(
@@ -596,11 +617,21 @@ class Content extends RestController
             $limit >= 0 ? $limit : null
         );
 
-        return new Values\RelationList(
+        $relationListValue = new Values\RelationList(
             $relationList,
             $contentId,
             $versionNumber,
             $this->request->getPathInfo()
+        );
+
+        if ( $contentInfo->mainLocationId === null )
+        {
+            return $relationListValue;
+        }
+
+        return new Values\CachedValue(
+            $relationListValue,
+            array( 'locationId' => $contentInfo->mainLocationId )
         );
     }
 
@@ -608,7 +639,7 @@ class Content extends RestController
      * Loads a relation for the given content object and version
      *
      * @param mixed $contentId
-     * @param int   $versionNumber
+     * @param int $versionNumber
      * @param mixed $relationId
      *
      * @throws \eZ\Publish\Core\REST\Common\Exceptions\NotFoundException
@@ -616,18 +647,26 @@ class Content extends RestController
      */
     public function loadVersionRelation( $contentId, $versionNumber, $relationId )
     {
+        $contentInfo = $this->repository->getContentService()->loadContentInfo( $contentId );
         $relationList = $this->repository->getContentService()->loadRelations(
-            $this->repository->getContentService()->loadVersionInfo(
-                $this->repository->getContentService()->loadContentInfo( $contentId ),
-                $versionNumber
-            )
+            $this->repository->getContentService()->loadVersionInfo( $contentInfo, $versionNumber )
         );
 
         foreach ( $relationList as $relation )
         {
             if ( $relation->id == $relationId )
             {
-                return new Values\RestRelation( $relation, $contentId, $versionNumber );
+                $relation = new Values\RestRelation( $relation, $contentId, $versionNumber );
+
+                if ( $contentInfo->mainLocationId === null )
+                {
+                    return $relation;
+                }
+
+                return new Values\CachedValue(
+                    new Values\LocationList( $relation, $this->request->getPathInfo() ),
+                    array( 'locationId' => $contentInfo->mainLocationId )
+                );
             }
         }
 
@@ -746,5 +785,35 @@ class Content extends RestController
                 'searchResults' => $this->repository->getSearchService()->findContent( $viewInput->query ),
             )
         );
+    }
+
+    /**
+     * List content views
+     *
+     * @return NotImplementedException;
+     */
+    public function listView()
+    {
+        return new NotImplementedException( 'ezpublish_rest.controller.content:listView' );
+    }
+
+    /**
+     * Get a content view
+     *
+     * @return NotImplementedException;
+     */
+    public function getView()
+    {
+        return new NotImplementedException( 'ezpublish_rest.controller.content:getView' );
+    }
+
+    /**
+     * Get a content view results
+     *
+     * @return NotImplementedException;
+     */
+    public function loadViewResults()
+    {
+        return new NotImplementedException( 'ezpublish_rest.controller.content:loadViewResults' );
     }
 }

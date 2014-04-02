@@ -2,7 +2,7 @@
 /**
  * File containing the Content Search Gateway class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -118,7 +118,8 @@ class Native extends Gateway
     public function findContent( Query $query, array $fieldFilters = array() )
     {
         $parameters = array(
-            "q" => $this->criterionVisitor->visit( $query->criterion ),
+            "q" => $this->criterionVisitor->visit( $query->query ),
+            "fq" => $this->criterionVisitor->visit( $query->filter ),
             "sort" => implode(
                 ", ",
                 array_map(
@@ -204,7 +205,7 @@ class Native extends Gateway
             '/solr/update?' . ( $this->commit ? "commit=true&" : "" ) . 'wt=json',
             new Message(
                 array(
-                    'Content-Type: text/xml',
+                    'Content-Type' => 'text/xml',
                 ),
                 $updates
             )
@@ -231,7 +232,7 @@ class Native extends Gateway
             '/solr/update?' . ( $this->commit ? "commit=true&" : "" ) . 'wt=json',
             new Message(
                 array(
-                    'Content-Type: text/xml',
+                    'Content-Type' => 'text/xml',
                 ),
                 "<delete><query>id:" . (int)$contentId . ( $versionId !== null ? " AND version_id:" . (int)$versionId : "" ) . "</query></delete>"
             )
@@ -282,7 +283,7 @@ class Native extends Gateway
                 "/solr/update?" . ( $this->commit ? "commit=true&" : "" ) . "wt=json",
                 new Message(
                     array(
-                        "Content-Type: text/xml",
+                        "Content-Type" => "text/xml",
                     ),
                     "<delete><query>id:(" . implode( " ", $contentToDelete ) . ")</query></delete>"
                 )
@@ -354,7 +355,7 @@ class Native extends Gateway
             '/solr/update?' . ( $this->commit ? "commit=true&" : "" ) . 'wt=json',
             new Message(
                 array(
-                    'Content-Type: text/xml',
+                    'Content-Type' => 'text/xml',
                 ),
                 '<delete><query>*:*</query></delete>'
             )

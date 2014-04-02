@@ -2,7 +2,7 @@
 /**
  * File containing the Content Search handler class
  *
- * @copyright Copyright (C) 1999-2012 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -31,10 +31,10 @@ class SearchHandler extends AbstractHandler implements SearchHandlerInterface
     /**
      * @see eZ\Publish\SPI\Persistence\Content\Search\Handler::findSingle
      */
-    public function findSingle( Criterion $criterion, array $fieldFilters = array() )
+    public function findSingle( Criterion $filter, array $fieldFilters = array() )
     {
-        $this->logger->logCall( __METHOD__, array( 'criterion' => get_class( $criterion ), 'fieldFilters' => $fieldFilters ) );
-        return $this->persistenceFactory->getSearchHandler()->findSingle( $criterion, $fieldFilters );
+        $this->logger->logCall( __METHOD__, array( 'filter' => get_class( $filter ), 'fieldFilters' => $fieldFilters ) );
+        return $this->persistenceFactory->getSearchHandler()->findSingle( $filter, $fieldFilters );
     }
 
     /**

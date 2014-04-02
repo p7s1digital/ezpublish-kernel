@@ -2,7 +2,7 @@
 /**
  * File containing the eZ\Publish\Core\Repository\ContentService class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  * @package eZ\Publish\Core\Repository
@@ -391,29 +391,6 @@ class ContentService implements ContentServiceInterface
                 ),
                 $e
             );
-        }
-
-        if ( !empty( $languages ) )
-        {
-            foreach ( $languages as $languageCode )
-            {
-                if (
-                    !in_array(
-                        $this->persistenceHandler->contentLanguageHandler()->loadByLanguageCode( $languageCode )->id,
-                        $spiContent->versionInfo->languageIds
-                    )
-                )
-                {
-                    throw new NotFoundException(
-                        "Content",
-                        array(
-                            $isRemoteId ? "remoteId" : "id" => $id,
-                            "languages" => $languages,
-                            "versionNo" => $versionNo
-                        )
-                    );
-                }
-            }
         }
 
         return $this->domainMapper->buildContentDomainObject( $spiContent );
@@ -1661,6 +1638,8 @@ class ContentService implements ContentServiceInterface
         if ( !$this->repository->canUser( 'content', 'create', $contentInfo, $destinationLocationCreateStruct ) )
             throw new UnauthorizedException( 'content', 'create' );
 
+        $defaultObjectStates = $this->getDefaultObjectStates();
+
         $this->repository->beginTransaction();
         try
         {
@@ -1668,6 +1647,15 @@ class ContentService implements ContentServiceInterface
                 $contentInfo->id,
                 $versionInfo ? $versionInfo->versionNo : null
             );
+
+            foreach ( $defaultObjectStates as $objectStateGroupId => $objectState )
+            {
+                $this->persistenceHandler->objectStateHandler()->setContentState(
+                    $spiContent->versionInfo->contentInfo->id,
+                    $objectStateGroupId,
+                    $objectState->id
+                );
+            }
 
             $content = $this->internalPublishVersion(
                 $this->domainMapper->buildVersionInfoDomainObject( $spiContent->versionInfo ),

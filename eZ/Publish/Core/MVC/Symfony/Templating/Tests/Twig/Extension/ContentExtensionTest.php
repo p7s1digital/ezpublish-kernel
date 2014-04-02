@@ -2,7 +2,7 @@
 /**
  * File containing the ContentExtensionIntegrationTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -32,8 +32,13 @@ class ContentExtensionIntegrationTest extends Twig_Test_IntegrationTestCase
 
         return array(
             new ContentExtension(
-                $this->getContainerMock(),
+                $this->getRepositoryMock(),
                 $configResolver,
+                $this->getMock( 'eZ\\Publish\\Core\\MVC\\Symfony\\FieldType\\View\\ParameterProviderRegistryInterface' ),
+                $this->getMockBuilder( 'eZ\Publish\Core\FieldType\XmlText\Converter\Html5' )->disableOriginalConstructor()->getMock(),
+                $this->getMockBuilder( 'eZ\\Publish\\Core\\FieldType\\RichText\\Converter' )->disableOriginalConstructor()->getMock(),
+                $this->getMockBuilder( 'eZ\\Publish\\Core\\FieldType\\RichText\\Converter' )->disableOriginalConstructor()->getMock(),
+                $this->getMock( 'eZ\Publish\SPI\Variation\VariationHandler' ),
                 new TranslationHelper( $configResolver, $this->getMock( 'eZ\\Publish\\API\\Repository\\ContentService' ) ),
                 $this->getMockBuilder( 'eZ\\Publish\\Core\\Helper\\FieldHelper' )->disableOriginalConstructor()->getMock()
             )

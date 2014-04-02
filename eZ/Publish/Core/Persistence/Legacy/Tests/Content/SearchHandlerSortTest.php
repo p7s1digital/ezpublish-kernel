@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Persistence\Legacy\Tests\Content\SearchHandlerSortTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -73,6 +73,8 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
                 $this->getDatabaseHandler(),
                 new Content\Search\Gateway\CriteriaConverter(
                     array(
+                        new Content\Search\Gateway\CriterionHandler\MatchAll( $db ),
+                        new Content\Search\Gateway\CriterionHandler\LogicalAnd( $db ),
                         new Content\Search\Gateway\CriterionHandler\SectionId( $db ),
                     )
                 ),
@@ -180,7 +182,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array()
@@ -209,7 +211,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array( new SortClause\LocationPathString( Query::SORT_DESC ) )
@@ -236,7 +238,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array( new SortClause\LocationDepth( Query::SORT_ASC ) )
@@ -279,7 +281,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array(
@@ -310,7 +312,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array(
@@ -341,7 +343,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array(
@@ -370,7 +372,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2 ) ),
                     'offset'      => 0,
                     'limit'       => 10,
                     'sortClauses' => array(
@@ -399,7 +401,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 4, 2, 6, 3 ) ),
+                    'filter'      => new Criterion\SectionId( array( 4, 2, 6, 3 ) ),
                     'offset'      => 0,
                     'limit'       => null,
                     'sortClauses' => array(
@@ -447,7 +449,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 4, 2, 6, 3 ) ),
+                    'filter'      => new Criterion\SectionId( array( 4, 2, 6, 3 ) ),
                     'offset'      => 0,
                     'limit'       => null,
                     'sortClauses' => array(
@@ -496,7 +498,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 2, 3 ) ),
+                    'filter'      => new Criterion\SectionId( array( 2, 3 ) ),
                     'offset'      => 0,
                     'limit'       => null,
                     'sortClauses' => array(
@@ -525,7 +527,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 1 ) ),
+                    'filter'      => new Criterion\SectionId( array( 1 ) ),
                     'offset'      => 0,
                     'limit'       => null,
                     'sortClauses' => array(
@@ -592,7 +594,7 @@ class SearchHandlerSortTest extends LanguageAwareTestCase
         $result = $locator->findContent(
             new Query(
                 array(
-                    'criterion'   => new Criterion\SectionId( array( 1 ) ),
+                    'filter'      => new Criterion\SectionId( array( 1 ) ),
                     'offset'      => 0,
                     'limit'       => null,
                     'sortClauses' => array(

@@ -2,7 +2,7 @@
 /**
  * File containing the EzcDatabase criteria converter class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -10,8 +10,8 @@
 namespace eZ\Publish\Core\Persistence\Legacy\Content\Search\Gateway;
 
 use eZ\Publish\API\Repository\Values\Content\Query\Criterion;
+use eZ\Publish\API\Repository\Exceptions\NotImplementedException;
 use ezcQuerySelect;
-use RuntimeException;
 
 /**
  * Content locator gateway implementation using the zeta database component.
@@ -41,6 +41,7 @@ class CriteriaConverter
      * Generic converter of criteria into query fragments
      *
      * @throws \eZ\Publish\API\Repository\Exceptions\InvalidArgumentException if Criterion is not applicable to its target
+     * @throws \eZ\Publish\API\Repository\Exceptions\NotImplementedException if criterion is not supported
      *
      * @param \ezcQuerySelect $query
      * @param Criterion $criterion
@@ -57,6 +58,6 @@ class CriteriaConverter
             }
         }
 
-        throw new RuntimeException( 'No conversion for criterion found.' );
+        throw new NotImplementedException( "No visitor available for: " . get_class( $criterion ) . ' with operator ' . $criterion->operator );
     }
 }

@@ -2,13 +2,15 @@
 /**
  * File containing the Location Gateway class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Publish\Core\Persistence\Legacy\Content\Location;
 
+use eZ\Publish\API\Repository\Values\Content\Query;
+use eZ\Publish\API\Repository\Values\Content\Query\Criterion;
 use eZ\Publish\SPI\Persistence\Content\Location\UpdateStruct;
 use eZ\Publish\SPI\Persistence\Content\Location\CreateStruct;
 
@@ -53,6 +55,20 @@ abstract class Gateway
      * @return array
      */
     abstract public function getBasicNodeDataByRemoteId( $remoteId );
+
+    /**
+     * @param \eZ\Publish\API\Repository\Values\Content\Query $query
+     *
+     * @return mixed
+     */
+    abstract public function find( Query $query );
+
+    /**
+     * @param \eZ\Publish\API\Repository\Values\Content\Query\Criterion $criterion
+     *
+     * @return int
+     */
+    abstract public function count( Criterion $criterion );
 
     /**
      * Loads data for all Locations for $contentId, optionally only in the

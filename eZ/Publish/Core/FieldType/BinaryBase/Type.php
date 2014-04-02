@@ -2,7 +2,7 @@
 /**
  * File containing the BinaryBase Type class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -129,11 +129,11 @@ abstract class Type extends FieldType
     /**
      * Attempts to complete the data in $value
      *
-     * @param mixed $value
+     * @param \eZ\Publish\Core\FieldType\BinaryBase\Value|\eZ\Publish\Core\FieldType\Value $value
      *
      * @return void
      */
-    protected function completeValue( $value )
+    protected function completeValue( BaseValue $value )
     {
         if ( !isset( $value->id ) || !file_exists( $value->id ) )
         {

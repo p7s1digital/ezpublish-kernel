@@ -2,13 +2,14 @@
 /**
  * File containing the ContentServiceTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Publish\API\Repository\Tests;
 
+use eZ\Publish\API\Repository\Values\Content\ContentInfo;
 use eZ\Publish\API\Repository\Values\Content\Field;
 use eZ\Publish\API\Repository\Values\Content\Location;
 use eZ\Publish\API\Repository\Values\Content\URLAlias;
@@ -115,6 +116,8 @@ class ContentServiceTest extends BaseContentServiceTest
             $this->markTestSkipped( "This test requires eZ Publish 5" );
         }
 
+        $anonymousUserId = $this->generateId( 'user', 10 );
+
         $repository = $this->getRepository();
         $contentService = $repository->getContentService();
         $contentTypeService = $repository->getContentTypeService();
@@ -130,7 +133,7 @@ class ContentServiceTest extends BaseContentServiceTest
         $roleService->addPolicy( $role, $policyCreateStruct );
 
         // Set Anonymous user as current
-        $repository->setCurrentUser( $repository->getUserService()->loadAnonymousUser() );
+        $repository->setCurrentUser( $repository->getUserService()->loadUser( $anonymousUserId ) );
 
         // Create a new content object:
         $contentCreate = $contentService->newContentCreateStruct(
@@ -2617,6 +2620,8 @@ class ContentServiceTest extends BaseContentServiceTest
         $this->assertEquals( 2, $contentCopied->getVersionInfo()->versionNo );
 
         $this->assertAllFieldsEquals( $contentCopied->getFields() );
+
+        $this->assertDefaultContentStates( $contentCopied->contentInfo );
     }
 
     /**
@@ -4476,6 +4481,35 @@ class ContentServiceTest extends BaseContentServiceTest
             }
         }
         return $fields;
+    }
+
+    /**
+     * Asserts that given Content has default ContentStates.
+     *
+     * @param \eZ\Publish\API\Repository\Values\Content\ContentInfo $contentInfo
+     *
+     * @return void
+     */
+    private function assertDefaultContentStates( ContentInfo $contentInfo )
+    {
+        $repository = $this->getRepository();
+        $objectStateService = $repository->getObjectStateService();
+
+        $objectStateGroups = $objectStateService->loadObjectStateGroups();
+
+        foreach ( $objectStateGroups as $objectStateGroup )
+        {
+            $contentState = $objectStateService->getContentState( $contentInfo, $objectStateGroup );
+            foreach ( $objectStateService->loadObjectStates( $objectStateGroup ) as $objectState )
+            {
+                // Only check the first object state which is the default one.
+                $this->assertEquals(
+                    $objectState,
+                    $contentState
+                );
+                break;
+            }
+        }
     }
 
     /**

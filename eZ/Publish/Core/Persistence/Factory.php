@@ -2,14 +2,14 @@
 /**
  * File containing a abstract Persistence Factory
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Publish\Core\Persistence;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerAware;
 
 /**
  * A reusable factory for all the "storage engine" handlers
@@ -20,25 +20,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Tests? See Cache\Tests\FactoryTests.php
  */
-class Factory
+class Factory extends ContainerAware
 {
-    /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface
-     */
-    private $container;
-
     /**
      * @var string
      */
     private $persistenceId;
 
-    /**
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param string $persistenceId
-     */
-    public function __construct( ContainerInterface $container, $persistenceId )
+    public function __construct( $persistenceId )
     {
-        $this->container = $container;
         $this->persistenceId = $persistenceId;
     }
 
@@ -88,6 +78,14 @@ class Factory
     public function getLocationHandler()
     {
         return $this->getPersistenceHandler()->locationHandler();
+    }
+
+    /**
+     * @return \eZ\Publish\SPI\Persistence\Content\Location\Search\Handler
+     */
+    public function getLocationSearchHandler()
+    {
+        return $this->getPersistenceHandler()->locationSearchHandler();
     }
 
     /**

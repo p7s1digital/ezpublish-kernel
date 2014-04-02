@@ -2,7 +2,7 @@
 /**
  * File containing the SearchServiceAuthorizationTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -33,15 +33,18 @@ class SearchServiceAuthorizationTest extends BaseTest
     {
         $repository = $this->getRepository();
 
+        $anonymousUserId = $this->generateId( 'user', 10 );
         /* BEGIN: Use Case */
+        // $anonymousUserId is the ID of the "Anonymous" user in a eZ
+        // Publish demo installation.
         $searchService = $repository->getSearchService();
         $userService = $repository->getUserService();
 
         // Set anonymous user
-        $repository->setCurrentUser( $userService->loadAnonymousUser() );
+        $repository->setCurrentUser( $userService->loadUser( $anonymousUserId ) );
 
         // Should return Content with location id: 2 as the anonymous user should have access to standard section
-        $searchResult = $searchService->findContent( new Query( array( 'criterion' => new Criterion\LocationId( 2 ) ) ) );
+        $searchResult = $searchService->findContent( new Query( array( 'filter' => new Criterion\LocationId( 2 ) ) ) );
         /* END: Use Case */
 
         self::assertEquals( 1, $searchResult->totalCount, "Search query should return totalCount of 1" );
@@ -60,15 +63,18 @@ class SearchServiceAuthorizationTest extends BaseTest
     {
         $repository = $this->getRepository();
 
+        $anonymousUserId = $this->generateId( 'user', 10 );
         /* BEGIN: Use Case */
+        // $anonymousUserId is the ID of the "Anonymous" user in a eZ
+        // Publish demo installation.
         $searchService = $repository->getSearchService();
         $userService = $repository->getUserService();
 
         // Set anonymous user
-        $repository->setCurrentUser( $userService->loadAnonymousUser() );
+        $repository->setCurrentUser( $userService->loadUser( $anonymousUserId ) );
 
         // This call will return an empty search result
-        $searchResult = $searchService->findContent( new Query( array( 'criterion' => new Criterion\LocationId( 5 ) ) ) );
+        $searchResult = $searchService->findContent( new Query( array( 'filter' => new Criterion\LocationId( 5 ) ) ) );
         /* END: Use Case */
 
         self::assertEmpty(
@@ -91,12 +97,15 @@ class SearchServiceAuthorizationTest extends BaseTest
     {
         $repository = $this->getRepository();
 
+        $anonymousUserId = $this->generateId( 'user', 10 );
         /* BEGIN: Use Case */
+        // $anonymousUserId is the ID of the "Anonymous" user in a eZ
+        // Publish demo installation.
         $searchService = $repository->getSearchService();
         $userService = $repository->getUserService();
 
         // Set anonymous user
-        $repository->setCurrentUser( $userService->loadAnonymousUser() );
+        $repository->setCurrentUser( $userService->loadUser( $anonymousUserId ) );
 
         // This call will fail with a "NotFoundException" as user does not have access
         $searchService->findSingle(

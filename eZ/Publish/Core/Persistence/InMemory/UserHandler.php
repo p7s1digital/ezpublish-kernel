@@ -2,7 +2,7 @@
 /**
  * File containing the User Handler inMemory impl
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -178,6 +178,7 @@ class UserHandler implements UserHandlerInterface
         $list = $this->backend->find(
             'User\\Role',
             array( 'id' => $roleId ),
+            array(),
             array(
                 'policies' => array(
                     'type' => 'User\\Policy',
@@ -205,6 +206,7 @@ class UserHandler implements UserHandlerInterface
         $list = $this->backend->find(
             'User\\Role',
             array( 'identifier' => $identifier ),
+            array(),
             array(
                 'policies' => array(
                     'type' => 'User\\Policy',
@@ -227,6 +229,7 @@ class UserHandler implements UserHandlerInterface
     {
         return $this->backend->find(
             'User\\Role',
+            array(),
             array(),
             array(
                 'policies' => array(
@@ -288,6 +291,7 @@ class UserHandler implements UserHandlerInterface
                 $list = $this->backend->find(
                     'Content',
                     array( 'id' => $location->contentId ),
+                    array(),
                     array(
                         'versionInfo' => array(
                             'type' => 'Content\\VersionInfo',
@@ -439,16 +443,15 @@ class UserHandler implements UserHandlerInterface
     /**
      * Removes a policy from a role
      *
-     * @param mixed $roleId
      * @param mixed $policyId
      *
      * @todo Throw exception on missing role / policy?
      *
      * @return void
      */
-    public function removePolicy( $roleId, $policyId )
+    public function deletePolicy( $policyId )
     {
-        $this->backend->deleteByMatch( 'User\\Policy', array( 'id' => $policyId, 'roleId' => $roleId ) );
+        $this->backend->deleteByMatch( 'User\\Policy', array( 'id' => $policyId ) );
     }
 
     /**
@@ -465,6 +468,7 @@ class UserHandler implements UserHandlerInterface
         $list = $this->backend->find(
             'Content',
             array( 'id' => $userId ),
+            array(),
             array(
                 'versionInfo' => array(
                     'type' => 'Content\\VersionInfo',
@@ -503,6 +507,7 @@ class UserHandler implements UserHandlerInterface
                 $list2 = $this->backend->find(
                     'Content',
                     array( 'id' => $location->contentId ),
+                    array(),
                     array(
                         'versionInfo' => array(
                             'type' => 'Content\\VersionInfo',
@@ -546,6 +551,7 @@ class UserHandler implements UserHandlerInterface
         $list = $this->backend->find(
             'User\\Role',
             array( 'groupIds' => $content->versionInfo->contentInfo->id ),
+            array(),
             array(
                 'policies' => array(
                     'type' => 'User\\Policy',

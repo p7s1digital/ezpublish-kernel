@@ -2,21 +2,24 @@
 /**
  * File containing the ViewController class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Publish\Core\MVC\Symfony\Controller\Content;
 
+use eZ\Publish\API\Repository\Values\Content\Location;
+use eZ\Publish\Core\Base\Exceptions\NotFoundException;
 use eZ\Publish\Core\MVC\Symfony\Controller\Controller;
-use eZ\Publish\Core\MVC\Symfony\View\Manager as ViewManager;
 use eZ\Publish\Core\MVC\Symfony\MVCEvents;
 use eZ\Publish\Core\MVC\Symfony\Event\APIContentExceptionEvent;
 use eZ\Publish\Core\MVC\Symfony\Security\Authorization\Attribute as AuthorizationAttribute;
 use eZ\Publish\Core\Base\Exceptions\UnauthorizedException;
 use eZ\Publish\API\Repository\Values\Content\VersionInfo as APIVersionInfo;
+use eZ\Publish\Core\MVC\Symfony\View\ViewManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use DateTime;
 use Exception;
@@ -24,11 +27,11 @@ use Exception;
 class ViewController extends Controller
 {
     /**
-     * @var \eZ\Publish\Core\MVC\Symfony\View\Manager
+     * @var \eZ\Publish\Core\MVC\Symfony\View\ViewManagerInterface
      */
     protected $viewManager;
 
-    public function __construct( ViewManager $viewManager )
+    public function __construct( ViewManagerInterface $viewManager )
     {
         $this->viewManager = $viewManager;
     }
@@ -96,10 +99,19 @@ class ViewController extends Controller
 
         try
         {
+            if ( isset( $params['location'] ) && $params['location'] instanceof Location )
+            {
+                $location = $params['location'];
+            }
+            else
+            {
+                $location = $this->getRepository()->getLocationService()->loadLocation( $locationId );
+            }
+
             $response->headers->set( 'X-Location-Id', $locationId );
             $response->setContent(
                 $this->renderLocation(
-                    $this->getRepository()->getLocationService()->loadLocation( $locationId ),
+                    $location,
                     $viewType,
                     $layout,
                     $params
@@ -111,6 +123,10 @@ class ViewController extends Controller
         catch ( UnauthorizedException $e )
         {
             throw new AccessDeniedException();
+        }
+        catch ( NotFoundException $e )
+        {
+            throw new NotFoundHttpException( $e->getMessage(), $e );
         }
         catch ( Exception $e )
         {
@@ -186,6 +202,10 @@ class ViewController extends Controller
         catch ( UnauthorizedException $e )
         {
             throw new AccessDeniedException();
+        }
+        catch ( NotFoundException $e )
+        {
+            throw new NotFoundHttpException( $e->getMessage(), $e );
         }
         catch ( Exception $e )
         {

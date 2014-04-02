@@ -2,7 +2,7 @@
 /**
  * File containing the EzcDatabase class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -18,6 +18,7 @@ use eZ\Publish\SPI\Persistence\Content\Type\UpdateStruct;
 use eZ\Publish\SPI\Persistence\Content\Type\Group;
 use eZ\Publish\SPI\Persistence\Content\Type\Group\UpdateStruct as GroupUpdateStruct;
 use eZ\Publish\Core\Persistence\Legacy\Content\StorageFieldDefinition;
+use eZ\Publish\SPI\Persistence\ValueObject;
 use ezcQuery;
 use ezcQuerySelect;
 
@@ -359,11 +360,11 @@ class EzcDatabase extends Gateway
      * Set common columns for insert/update of a Type.
      *
      * @param \ezcQuery $q
-     * @param mixed $type
+     * @param \eZ\Publish\SPI\Persistence\ValueObject|\eZ\Publish\SPI\Persistence\Content\Type|\eZ\Publish\SPI\Persistence\Content\Type\UpdateStruct $type
      *
      * @return void
      */
-    protected function setCommonTypeColumns( ezcQuery $q, $type )
+    protected function setCommonTypeColumns( ezcQuery $q, ValueObject $type )
     {
         $q->set(
             $this->dbHandler->quoteColumn( 'serialized_name_list' ),

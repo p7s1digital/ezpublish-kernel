@@ -2,7 +2,7 @@
 /**
  * File containing the LocalePassTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -28,17 +28,14 @@ class LocalePassTest extends AbstractCompilerPassTest
         $container->addCompilerPass( new LocalePass() );
     }
 
-    /**
-     * @covers eZ\Bundle\EzPublishCoreBundle\DependencyInjection\Compiler\LocalePass::process
-     */
     public function testLocaleListener()
     {
         $this->setDefinition( 'locale_listener', new Definition() );
         $this->compile();
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall(
             'locale_listener',
-            'setServiceContainer',
-            array( new Reference( 'service_container' ) )
+            'setConfigResolver',
+            array( new Reference( 'ezpublish.config.resolver' ) )
         );
         $this->assertContainerBuilderHasServiceDefinitionWithMethodCall(
             'locale_listener',

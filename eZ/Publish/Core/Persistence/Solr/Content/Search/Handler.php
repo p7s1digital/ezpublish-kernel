@@ -2,7 +2,7 @@
 /**
  * File containing the Content Search handler class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -88,6 +88,13 @@ class Handler implements SearchHandlerInterface
     protected $sectionHandler;
 
     /**
+     * Field name generator
+     *
+     * @var \eZ\Publish\Core\Persistence\Solr\Content\Search\FieldNameGenerator
+     */
+    protected $fieldNameGenerator;
+
+    /**
      * Creates a new content handler.
      *
      * @param \eZ\Publish\Core\Persistence\Solr\Content\Search\Gateway $gateway
@@ -103,7 +110,8 @@ class Handler implements SearchHandlerInterface
         LocationHandler $locationHandler,
         ContentTypeHandler $contentTypeHandler,
         ObjectStateHandler $objectStateHandler,
-        SectionHandler $sectionHandler
+        SectionHandler $sectionHandler,
+        FieldNameGenerator $fieldNameGenerator
     )
     {
         $this->gateway            = $gateway;
@@ -112,6 +120,7 @@ class Handler implements SearchHandlerInterface
         $this->contentTypeHandler = $contentTypeHandler;
         $this->objectStateHandler = $objectStateHandler;
         $this->sectionHandler     = $sectionHandler;
+        $this->fieldNameGenerator = $fieldNameGenerator;
     }
 
     /**
@@ -129,6 +138,9 @@ class Handler implements SearchHandlerInterface
      */
     public function findContent( Query $query, array $fieldFilters = array() )
     {
+        $query->filter = $query->filter ?: new Criterion\MatchAll();
+        $query->query = $query->query ?: new Criterion\MatchAll();
+
         return $this->gateway->findContent( $query, $fieldFilters );
     }
 
@@ -140,24 +152,25 @@ class Handler implements SearchHandlerInterface
      * @throws \eZ\Publish\API\Repository\Exceptions\InvalidArgumentException if there is more than than one result matching the criterions
      *
      * @todo define structs for the field filters
-     * @param \eZ\Publish\API\Repository\Values\Content\Query\Criterion $criterion
+     * @param \eZ\Publish\API\Repository\Values\Content\Query\Criterion $filter
      * @param array $fieldFilters - a map of filters for the returned fields.
      *        Currently supported: <code>array("languages" => array(<language1>,..))</code>.
      *
      * @return \eZ\Publish\SPI\Persistence\Content
      */
-    public function findSingle( Criterion $criterion, array $fieldFilters = array() )
+    public function findSingle( Criterion $filter, array $fieldFilters = array() )
     {
-        $query = new Query();
-        $query->criterion = $criterion;
-        $query->offset    = 0;
-        $query->limit     = 1;
-        $result = $this->findContent( $query, $fieldFilters );
+        $searchQuery = new Query();
+        $searchQuery->filter = $filter;
+        $searchQuery->query  = new Criterion\MatchAll();
+        $searchQuery->offset = 0;
+        $searchQuery->limit  = 1;
+        $result = $this->findContent( $searchQuery, $fieldFilters );
 
         if ( !$result->totalCount )
-            throw new NotFoundException( 'Content', "findSingle() found no content for given \$criterion" );
+            throw new NotFoundException( 'Content', "findSingle() found no content for given \$filter" );
         else if ( $result->totalCount > 1 )
-            throw new InvalidArgumentException( "totalCount", "findSingle() found more then one item for given \$criterion" );
+            throw new InvalidArgumentException( "totalCount", "findSingle() found more then one item for given \$filter" );
 
         $first = reset( $result->searchHits );
         return $first->valueObject;
@@ -389,6 +402,17 @@ class Handler implements SearchHandlerInterface
                 array_keys( $content->versionInfo->names ),
                 new FieldType\MultipleStringField()
             ),
+            new Field(
+                'invisible',
+                array_map(
+                    function ( $location )
+                    {
+                        return $location->invisible;
+                    },
+                    $locations
+                ),
+                new FieldType\MultipleBooleanField()
+            ),
         );
 
         if ( $mainLocation !== null )
@@ -442,16 +466,21 @@ class Handler implements SearchHandlerInterface
                 }
 
                 $fieldType = $this->fieldRegistry->getType( $field->type );
-                $prefix    = $contentType->identifier . '/' . $fieldDefinition->identifier . '/';
                 foreach ( $fieldType->getIndexData( $field ) as $indexField )
                 {
-                    $document[] = new Field( $prefix . $indexField->name, $indexField->value, $indexField->type );
+                    $document[] = new Field(
+                        $this->fieldNameGenerator->getName(
+                            $indexField->name,
+                            $fieldDefinition->identifier,
+                            $contentType->identifier
+                        ),
+                        $indexField->value,
+                        $indexField->type
+                    );
                 }
             }
         }
 
-        /*
-        @todo FIXME: Uncomment when object states implementation is ready to be used
         $objectStateIds = array();
         foreach ( $this->objectStateHandler->loadAllGroups() as $objectStateGroup )
         {
@@ -464,9 +493,8 @@ class Handler implements SearchHandlerInterface
         $document[] = new Field(
             'object_state',
             $objectStateIds,
-            new FieldType\IdentifierField()
+            new FieldType\MultipleIdentifierField()
         );
-        */
 
         return $document;
     }

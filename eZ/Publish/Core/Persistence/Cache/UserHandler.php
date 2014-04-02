@@ -2,7 +2,7 @@
 /**
  * File containing a User Handler impl
  *
- * @copyright Copyright (C) 1999-2012 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -227,14 +227,14 @@ class UserHandler extends AbstractHandler implements UserHandlerInterface
     }
 
     /**
-     * @see eZ\Publish\SPI\Persistence\User\Handler::removePolicy
+     * @see eZ\Publish\SPI\Persistence\User\Handler::deletePolicy
      */
-    public function removePolicy( $roleId, $policyId )
+    public function deletePolicy( $policyId )
     {
-        $this->logger->logCall( __METHOD__, array( 'role' => $roleId, 'policy' => $policyId ) );
-        $this->persistenceFactory->getUserHandler()->removePolicy( $roleId, $policyId );
+        $this->logger->logCall( __METHOD__, array( 'policy' => $policyId ) );
+        $this->persistenceFactory->getUserHandler()->deletePolicy( $policyId );
 
-        $this->cache->clear( 'user', 'role', $roleId );
+        $this->cache->clear( 'user', 'role' );
     }
 
     /**

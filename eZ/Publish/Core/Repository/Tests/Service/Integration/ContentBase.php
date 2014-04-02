@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Repository\Tests\Service\Integration\ContentBase class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -382,8 +382,10 @@ abstract class ContentBase extends BaseServiceTest
         return array(
             array( 4, null, null ),
             array( 4, array( "eng-US" ), null ),
+            array( 4, array( "eng-US", "fre-FR" ), null ),
             array( 4, null, 1 ),
-            array( 4, array( "eng-US" ), 1 )
+            array( 4, array( "eng-US", "fre-FR", "nor-NO", "eng-DE" ), 1 ),
+            array( 4, array( "eng-US" ), 1 ),
         );
     }
 
@@ -524,7 +526,7 @@ abstract class ContentBase extends BaseServiceTest
         $contentService = $this->repository->getContentService();
 
         // Throws an exception because content does not exists in "eng-GB" language
-        $content = $contentService->loadContent( 4, array( "eng-GB" ) );
+        $content = $contentService->loadContent( 4, array( "fre-FR" ) );
         /* END: Use Case */
     }
 
@@ -532,15 +534,19 @@ abstract class ContentBase extends BaseServiceTest
      * Test for the loadContent() method.
      *
      * @covers \eZ\Publish\Core\Repository\ContentService::loadContent
-     * @expectedException \eZ\Publish\API\Repository\Exceptions\NotFoundException
      */
     public function testLoadContentThrowsNotFoundExceptionLanguageNotFoundVariation()
     {
         /* BEGIN: Use Case */
         $contentService = $this->repository->getContentService();
 
-        // Throws an exception because content does not exists in "eng-GB" language
+        // Content only exists in eng-US, so we should only have it in eng-US.
         $content = $contentService->loadContent( 4, array( "eng-US", "eng-GB" ) );
+        $this->assertInstanceOf(
+            "eZ\\Publish\\API\\Repository\\Values\\Content\\Content",
+            $content
+        );
+        $this->assertContentValues( $content, array( "eng-US" ) );
         /* END: Use Case */
     }
 

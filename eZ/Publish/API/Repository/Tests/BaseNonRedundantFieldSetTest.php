@@ -2,7 +2,7 @@
 /**
  * File containing the NonRedundantFieldSetTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -171,8 +171,14 @@ class BaseNonRedundantFieldSetTest extends BaseTest
         $fieldValues = array(
             "field1" => array( "eng-US" => "value 1" ),
             "field2" => array( "eng-US" => "value 2" ),
-            "field3" => array( "eng-US" => "value 3" ),
-            "field4" => array( "eng-US" => "value 4" )
+            "field3" => array(
+                "eng-US" => "value 3",
+                "eng-GB" => "value 3 eng-GB"
+            ),
+            "field4" => array(
+                "eng-US" => "value 4",
+                "eng-GB" => "value 4 eng-GB"
+            )
         );
 
         return $this->createTestContent( "eng-US", $fieldValues );

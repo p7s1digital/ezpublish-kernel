@@ -10,6 +10,7 @@ parameters:
     ezpublish.spi.persistence.cache.userHandler.class: eZ\Publish\Core\Persistence\Cache\UserHandler
     ezpublish.spi.persistence.cache.searchHandler.class: eZ\Publish\Core\Persistence\Cache\SearchHandler
     ezpublish.spi.persistence.cache.trashHandler.class: eZ\Publish\Core\Persistence\Cache\TrashHandler
+    ezpublish.spi.persistence.cache.locationSearchHandler.class: eZ\Publish\Core\Persistence\Cache\LocationSearchHandler
     ezpublish.spi.persistence.cache.urlAliasHandler.class: eZ\Publish\Core\Persistence\Cache\UrlAliasHandler
     ezpublish.spi.persistence.cache.persistenceLogger.class: eZ\Publish\Core\Persistence\Cache\PersistenceLogger
     # Make sure logging is only enabled for debug by default
@@ -58,6 +59,15 @@ parameters:
         - ../vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/Persistence/Tests/TransformationProcessor/_fixtures/transformations/latin.tr.result
         - ../vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/Persistence/Tests/TransformationProcessor/_fixtures/transformations/search.tr.result
 
+    # RichText XSLT converters
+    ezpublish.fieldType.ezrichtext.converter.xslt_converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\RichText\XsltConverter
+    ezpublish.fieldType.ezrichtext.converter.ezxmlToDocbook.resources: %kernel.root_dir%/../vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/Persistence/Legacy/Content/FieldValue/Converter/RichText/Resources/stylesheets/ezxml_docbook.xsl
+    ezpublish.fieldType.ezrichtext.converter.docbookToEzxml.resources: %kernel.root_dir%/../vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/Persistence/Legacy/Content/FieldValue/Converter/RichText/Resources/stylesheets/docbook_ezxml.xsl
+
+    # XmlText XSD validator
+    ezpublish.fieldType.ezrichtext.validator.ezxml.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\RichText\XsdValidator
+    ezpublish.fieldType.ezrichtext.validator.ezxml.resources: %kernel.root_dir%/../vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/Persistence/Legacy/Content/FieldValue/Converter/RichText/Resources/schemas/ezxml.xsd
+
     # Value converters
     ezpublish.fieldType.ezauthor.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\Author
     ezpublish.fieldType.ezbinaryfile.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\BinaryFile
@@ -83,6 +93,8 @@ parameters:
     ezpublish.fieldType.ezselection.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\Selection
     ezpublish.fieldType.ezstring.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\TextLine
     ezpublish.fieldType.eztext.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\TextBlock
+    ezpublish.fieldType.ezrichtext.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\RichText
+    ezpublish.fieldType.ezrichtext.storage_gateway.class: eZ\Publish\Core\FieldType\RichText\RichTextStorage\Gateway\LegacyStorage
     ezpublish.fieldType.ezxmltext.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\XmlText
     ezpublish.fieldType.ezxmltext.storage_gateway.class: eZ\Publish\Core\FieldType\XmlText\XmlTextStorage\Gateway\LegacyStorage
     ezpublish.fieldType.ezsrrating.converter.class: eZ\Publish\Core\Persistence\Legacy\Content\FieldValue\Converter\Rating
@@ -110,15 +122,16 @@ services:
             - @ezpublish.spi.persistence.cache.userHandler
             - @ezpublish.spi.persistence.cache.searchHandler
             - @ezpublish.spi.persistence.cache.trashHandler
+            - @ezpublish.spi.persistence.cache.locationSearchHandler
             - @ezpublish.spi.persistence.cache.urlAliasHandler
             - @ezpublish.spi.persistence.cache.persistenceLogger
             - @ezpublish.cache_pool.spi.cache.decorator
 
     ezpublish.spi.persistence.lazy_factory:
         class: %ezpublish.spi.persistence.lazy_factory.class%
-        arguments:
-            - @service_container
-            - %ezpublish.spi.persistence.default_id%
+        arguments: [%ezpublish.spi.persistence.default_id%]
+        calls:
+            - [setContainer, [@service_container]]
 
     ezpublish.spi.persistence.cache.persistenceLogger:
         class: %ezpublish.spi.persistence.cache.persistenceLogger.class%
@@ -165,6 +178,10 @@ services:
         class: %ezpublish.spi.persistence.cache.trashHandler.class%
         parent: ezpublish.spi.persistence.cache.abstractHandler
 
+    ezpublish.spi.persistence.cache.locationSearchHandler:
+        class: %ezpublish.spi.persistence.cache.locationSearchHandler.class%
+        parent: ezpublish.spi.persistence.cache.abstractHandler
+
     ezpublish.spi.persistence.cache.urlAliasHandler:
         class: %ezpublish.spi.persistence.cache.urlAliasHandler.class%
         parent: ezpublish.spi.persistence.cache.abstractHandler
@@ -178,7 +195,8 @@ services:
     # Legacy storage engine
     ezpublish.api.storage_engine.legacy.factory:
         class: %ezpublish.api.storage_engine.legacy.factory.class%
-        arguments: [@service_container]
+        calls:
+            - [setContainer, [@service_container]]
 
     ezpublish.api.storage_engine.legacy.dbhandler.factory:
         class: %ezpublish.api.storage_engine.legacy.dbhandler.factory.class%
@@ -304,6 +322,16 @@ services:
         class: %ezpublish.fieldType.eztext.converter.class%
         tags:
             - {name: ezpublish.storageEngine.legacy.converter, alias: eztext, lazy: true, callback: '::create'}
+
+    ezpublish.fieldType.ezrichtext.converter:
+        class: %ezpublish.fieldType.ezrichtext.converter.class%
+        tags:
+            - {name: ezpublish.storageEngine.legacy.converter, alias: ezrichtext, lazy: true, callback: '::create'}
+
+    ezpublish.fieldType.ezrichtext.storage_gateway:
+        class: %ezpublish.fieldType.ezrichtext.storage_gateway.class%
+        tags:
+            - {name: ezpublish.fieldType.externalStorageHandler.gateway, alias: ezrichtext, identifier: LegacyStorage}
 
     ezpublish.fieldType.ezxmltext.converter:
         class: %ezpublish.fieldType.ezxmltext.converter.class%

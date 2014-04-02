@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\SPI\Tests\FieldType\ImageIntegrationTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -185,11 +185,8 @@ class ImageIntegrationTest extends FileBaseIntegrationTest
             file_exists( $this->getStorageDir() . '/' . $field->value->data['uri'] ),
             "Stored file " . $field->value->data['uri'] . " doesn't exist"
         );
-
         $this->assertEquals( 'Ice-Flower.jpg', $field->value->data['fileName'] );
-
         $this->assertEquals( 'An icy flower.', $field->value->data['alternativeText'] );
-
         $this->assertNull( $field->value->externalData );
     }
 
@@ -238,17 +235,8 @@ class ImageIntegrationTest extends FileBaseIntegrationTest
             "Stored file ".$field->value->data['uri']." exists"
         );
 
-        // Check old files not removed before update
-        // need to stay there for reference integrity
-        $this->assertEquals(
-            2,
-            count( glob( dirname( $storagePath ) . '/*' ) )
-        );
-
         $this->assertEquals( 'Blueish-Blue.jpg', $field->value->data['fileName'] );
-
         $this->assertEquals( 'This blue is so blueish.', $field->value->data['alternativeText'] );
-
         $this->assertNull( $field->value->externalData );
     }
 

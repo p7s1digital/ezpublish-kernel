@@ -2,7 +2,7 @@
 /**
  * File containing the ContentHandler implementation
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -397,6 +397,7 @@ class ContentHandler implements ContentHandlerInterface
                 '_contentId' => $id,
                 'versionNo' => $version
             ),
+            array(),
             array(
                 'contentInfo' => array(
                     'type' => 'Content\\ContentInfo',
@@ -418,6 +419,13 @@ class ContentHandler implements ContentHandlerInterface
         if ( isset( $translations ) )
             $fieldMatch["languageCode"] = $translations;
         $content->fields = $this->backend->find( 'Content\\Field', $fieldMatch );
+        if ( empty( $content->fields ) )
+        {
+            throw new NotFoundException(
+                'Content',
+                "contentId:{$id}, versionNo:{$version}" . ( $translations ? ', ' . implode( ',', $translations ) : '' )
+            );
+        }
 
         $content->versionInfo = $versions[0];
         return $content;
@@ -469,6 +477,7 @@ class ContentHandler implements ContentHandlerInterface
                 '_contentId' => $contentId,
                 'versionNo' => $versionNo
             ),
+            array(),
             array(
                 'contentInfo' => array(
                     'type' => 'Content\\ContentInfo',
@@ -496,6 +505,7 @@ class ContentHandler implements ContentHandlerInterface
                 "status" => VersionInfo::STATUS_DRAFT,
                 "creatorId" => $userId
             ),
+            array(),
             array(
                 'contentInfo' => array(
                     'type' => 'Content\\ContentInfo',
@@ -763,6 +773,7 @@ class ContentHandler implements ContentHandlerInterface
             array(
                 '_contentId' => $contentId
             ),
+            array(),
             array(
                 'contentInfo' => array(
                     'type' => 'Content\\ContentInfo',

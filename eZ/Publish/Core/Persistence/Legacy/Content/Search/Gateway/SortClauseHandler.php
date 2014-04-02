@@ -2,7 +2,7 @@
 /**
  * File containing the EzcDatabase sort clause handler class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -87,12 +87,13 @@ abstract class SortClauseHandler
      * Returns the sort table name
      *
      * @param int $number
+     * @param null|string $externalTableName
      *
      * @return string
      */
-    protected function getSortTableName( $number )
+    protected function getSortTableName( $number, $externalTableName = null )
     {
-        return 'sort_table_' . $number;
+        return 'sort_table_' . ( $externalTableName !== null ? $externalTableName . "_" : "" ) . $number;
     }
 }
 

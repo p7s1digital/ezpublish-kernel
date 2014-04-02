@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Persistence\InMemory\Tests\LocationHandlerTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -98,6 +98,7 @@ class LocationHandlerTest extends HandlerTest
                         "sectionId" => 1,
                         "typeId" => $type->id,
                         "initialLanguageId" => 2,
+                        "remoteId" => "contentRemote$i",
                         "fields" => array(
                             new Field(
                                 array(
@@ -124,6 +125,7 @@ class LocationHandlerTest extends HandlerTest
                     array(
                         "contentId" => $this->lastContentId,
                         "contentVersion" => 1,
+                        "remoteId" => "locationRemote$i",
                         "mainLocationId" => $this->lastLocationId,
                         "sortField" => Location::SORT_FIELD_NAME,
                         "sortOrder" => Location::SORT_ORDER_ASC,

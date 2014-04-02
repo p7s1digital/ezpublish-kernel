@@ -2,7 +2,7 @@
 /**
  * File containing the LegacyResponseManagerTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -34,6 +34,33 @@ class LegacyResponseManagerTest extends PHPUnit_Framework_TestCase
         parent::setUp();
         $this->templateEngine = $this->getMock( 'Symfony\Component\Templating\EngineInterface' );
         $this->configResolver = $this->getMock( 'eZ\Publish\Core\MVC\ConfigResolverInterface' );
+    }
+
+    /**
+     * @dataProvider generateResponseAccessDeniedProvider
+     */
+    public function testGenerateResponseAccessDenied( $errorCode, $errorMessage )
+    {
+        $this->setExpectedException( 'Symfony\Component\Security\Core\Exception\AccessDeniedException', $errorMessage );
+        $manager = new LegacyResponseManager( $this->templateEngine, $this->configResolver );
+        $content = 'foobar';
+        $moduleResult = array(
+            'content' => $content,
+            'errorCode' => $errorCode,
+            'errorMessage' => $errorMessage
+        );
+        $kernelResult = new ezpKernelResult( $content, array( 'module_result' => $moduleResult ) );
+        $manager->generateResponseFromModuleResult( $kernelResult );
+    }
+
+    public function generateResponseAccessDeniedProvider()
+    {
+        return array(
+            array( '401', 'Unauthorized access' ),
+            array( '403', 'Forbidden' ),
+            array( '403', null ),
+            array( '401', null ),
+        );
     }
 
     /**

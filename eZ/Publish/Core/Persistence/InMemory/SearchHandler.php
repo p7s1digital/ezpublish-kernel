@@ -2,7 +2,7 @@
 /**
  * File containing the Content Search handler class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -95,7 +95,7 @@ class SearchHandler implements SearchHandlerInterface
     {
         // Only some criteria are supported as getting full support for all in InMemory engine is not a priority
         $match = array();
-        $this->generateMatchByCriteria( array( $query->criterion ), $match );
+        $this->generateMatchByCriteria( array( $query->filter ), $match );
 
         if ( empty( $match ) )
         {
@@ -109,6 +109,7 @@ class SearchHandler implements SearchHandlerInterface
         $list = $this->backend->find(
             'Content',
             $match,
+            array(),
             array(
                 'locations' => array(
                     'type' => 'Content\\Location',
@@ -191,18 +192,18 @@ class SearchHandler implements SearchHandlerInterface
      * @throws \eZ\Publish\API\Repository\Exceptions\InvalidArgumentException if there is more than than one result matching the criterions
      *
      * @todo define structs for the field filters
-     * @param \eZ\Publish\API\Repository\Values\Content\Query\Criterion $criterion
+     * @param \eZ\Publish\API\Repository\Values\Content\Query\Criterion $filter
      * @param array $fieldFilters - a map of filters for the returned fields.
      *        Currently supported: <code>array("languages" => array(<language1>,..))</code>.
      *
      * @return \eZ\Publish\SPI\Persistence\Content
      */
-    public function findSingle( Criterion $criterion, array $fieldFilters = array() )
+    public function findSingle( Criterion $filter, array $fieldFilters = array() )
     {
-        $list = $this->findContent( new Query( array( 'criterion' => $criterion ) ) );
+        $list = $this->findContent( new Query( array( 'filter' => $filter ) ) );
 
         if ( !$list->totalCount )
-            throw new NotFound( 'Content', var_export( $criterion, true ) );
+            throw new NotFound( 'Content', var_export( $filter, true ) );
         else if ( $list->totalCount > 1 )
             throw new InvalidArgumentException( "totalCount", "findSingle() found more then one item for query" );
 

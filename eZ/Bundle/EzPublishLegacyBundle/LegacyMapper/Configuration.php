@@ -2,7 +2,7 @@
 /**
  * File containing the Configuration class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -17,13 +17,13 @@ use eZ\Bundle\EzPublishLegacyBundle\Cache\PersistenceCachePurger;
 use eZ\Publish\Core\MVC\Symfony\Routing\Generator\UrlAliasGenerator;
 use ezpEvent;
 use ezxFormToken;
+use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Maps configuration parameters to the legacy parameters
  */
-class Configuration implements EventSubscriberInterface
+class Configuration extends ContainerAware implements EventSubscriberInterface
 {
     /**
      * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
@@ -46,17 +46,13 @@ class Configuration implements EventSubscriberInterface
     private $urlAliasGenerator;
 
     /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface
-     */
-    private $container;
-
-    /**
      * @var array
      */
     private $options;
 
     /**
-     * Disables the feature when set using setIsEnabled()
+     * Disables the feature when set using setEnabled()
+     *
      * @var bool
      */
     private $enabled = true;
@@ -65,7 +61,6 @@ class Configuration implements EventSubscriberInterface
         ConfigResolverInterface $configResolver,
         GatewayCachePurger $gatewayCachePurger,
         PersistenceCachePurger $persistenceCachePurger,
-        ContainerInterface $container,
         UrlAliasGenerator $urlAliasGenerator,
         array $options = array()
     )
@@ -73,13 +68,13 @@ class Configuration implements EventSubscriberInterface
         $this->configResolver = $configResolver;
         $this->gatewayCachePurger = $gatewayCachePurger;
         $this->persistenceCachePurger = $persistenceCachePurger;
-        $this->container = $container;
         $this->urlAliasGenerator = $urlAliasGenerator;
         $this->options = $options;
     }
 
     /**
      * Toggles the feature
+     *
      * @param bool $isEnabled
      */
     public function setEnabled( $isEnabled )
@@ -147,6 +142,9 @@ class Configuration implements EventSubscriberInterface
         );
         // Multisite settings (PathPrefix and co)
         $settings += $this->getMultiSiteSettings();
+
+        // User settings
+        $settings["site.ini/UserSettings/AnonymousUserID"] = $this->configResolver->getParameter( "anonymous_user_id" );
 
         $event->getParameters()->set(
             "injected-settings",

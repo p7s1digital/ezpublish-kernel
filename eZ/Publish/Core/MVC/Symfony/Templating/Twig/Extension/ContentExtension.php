@@ -2,24 +2,28 @@
 /**
  * File containing the ContentExtension class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Publish\Core\MVC\Symfony\Templating\Twig\Extension;
 
+use eZ\Publish\API\Repository\Repository;
 use eZ\Publish\API\Repository\Values\Content\ContentInfo;
 use eZ\Publish\API\Repository\Values\ValueObject;
 use eZ\Publish\Core\Base\Exceptions\InvalidArgumentType;
 use eZ\Publish\Core\Helper\FieldHelper;
 use eZ\Publish\Core\Helper\TranslationHelper;
+use eZ\Publish\Core\MVC\Symfony\FieldType\View\ParameterProviderRegistryInterface;
 use eZ\Publish\Core\Repository\Values\Content\Content;
 use eZ\Publish\API\Repository\Values\Content\Field;
 use eZ\Publish\API\Repository\Values\ContentType\FieldDefinition;
 use eZ\Publish\API\Repository\Values\Content\VersionInfo;
+use eZ\Publish\Core\FieldType\XmlText\Converter\Html5 as Html5Converter;
+use eZ\Publish\Core\FieldType\RichText\Converter as RichTextConverterInterface;
 use eZ\Publish\Core\MVC\ConfigResolverInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use eZ\Publish\SPI\Variation\VariationHandler;
 use Twig_Extension;
 use Twig_Environment;
 use Twig_SimpleFunction;
@@ -81,6 +85,20 @@ class ContentExtension extends Twig_Extension
     protected $xmlTextConverter;
 
     /**
+     * Converter used to transform RichText content to HTML5 for rendering purposes
+     *
+     * @var \eZ\Publish\Core\FieldType\RichText\Converter
+     */
+    protected $richTextConverter;
+
+    /**
+     * Converter used to transform RichText content to HTML5 for editing purposes
+     *
+     * @var \eZ\Publish\Core\FieldType\RichText\Converter
+     */
+    protected $richTextEditConverter;
+
+    /**
      * Hash of field type identifiers (i.e. "ezstring"), indexed by field definition identifier
      *
      * @var array
@@ -98,6 +116,16 @@ class ContentExtension extends Twig_Extension
     protected $container;
 
     /**
+     * @var \eZ\Publish\API\Repository\Repository
+     */
+    protected $repository;
+
+    /**
+     * @var \eZ\Publish\Core\MVC\Symfony\FieldType\View\ParameterProviderRegistryInterface
+     */
+    protected $parameterProviderRegistry;
+
+    /**
      * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
      */
     protected $configResolver;
@@ -112,7 +140,17 @@ class ContentExtension extends Twig_Extension
      */
     protected $fieldHelper;
 
-    public function __construct( ContainerInterface $container, ConfigResolverInterface $resolver, TranslationHelper $translationHelper, FieldHelper $fieldHelper )
+    public function __construct(
+        Repository $repository,
+        ConfigResolverInterface $resolver,
+        ParameterProviderRegistryInterface $parameterProviderRegistry,
+        Html5Converter $xmlTextConverter,
+        RichTextConverterInterface $richTextConverter,
+        RichTextConverterInterface $richTextEditConverter,
+        VariationHandler $imageVariationService,
+        TranslationHelper $translationHelper,
+        FieldHelper $fieldHelper
+    )
     {
         $comp = function ( $a, $b )
         {
@@ -126,8 +164,13 @@ class ContentExtension extends Twig_Extension
         usort( $this->renderFieldDefinitionSettingsResources, $comp );
 
         $this->blocks = array();
-        $this->container = $container;
+        $this->repository = $repository;
         $this->configResolver = $resolver;
+        $this->parameterProviderRegistry = $parameterProviderRegistry;
+        $this->xmlTextConverter = $xmlTextConverter;
+        $this->richTextConverter = $richTextConverter;
+        $this->richTextEditConverter = $richTextEditConverter;
+        $this->imageVariationService = $imageVariationService;
         $this->translationHelper = $translationHelper;
         $this->fieldHelper = $fieldHelper;
     }
@@ -192,6 +235,16 @@ class ContentExtension extends Twig_Extension
                 'xmltext_to_html5',
                 array( $this, 'xmlTextToHtml5' ),
                 array( 'is_safe' => array( 'html' ) )
+            ),
+            new Twig_SimpleFilter(
+                'richtext_to_html5',
+                array( $this, 'richTextToHtml5' ),
+                array( 'is_safe' => array( 'html' ) )
+            ),
+            new Twig_SimpleFilter(
+                'richtext_to_html5_edit',
+                array( $this, 'richTextToHtml5Edit' ),
+                array( 'is_safe' => array( 'html' ) )
             )
         );
     }
@@ -225,14 +278,9 @@ class ContentExtension extends Twig_Extension
             'attr' => array() // attributes to add on the enclosing HTML tags
         );
 
-        /** @var $repository \eZ\Publish\API\Repository\Repository */
-        $repository = $this->container->get( 'ezpublish.api.repository' );
-        /** @var $parameterProviderRegistry \eZ\Publish\Core\MVC\Symfony\FieldType\View\ParameterProviderRegistryInterface */
-        $parameterProviderRegistry = $this->container->get( 'ezpublish.fieldType.parameterProviderRegistry' );
-
         $versionInfo = $content->getVersionInfo();
         $contentInfo = $versionInfo->getContentInfo();
-        $contentType = $repository->getContentTypeService()->loadContentType( $contentInfo->contentTypeId );
+        $contentType = $this->repository->getContentTypeService()->loadContentType( $contentInfo->contentTypeId );
         $fieldDefinition = $contentType->getFieldDefinition( $field->fieldDefIdentifier );
         // Adding Field, FieldSettings and ContentInfo objects to
         // parameters to be passed to the template
@@ -244,9 +292,9 @@ class ContentExtension extends Twig_Extension
         );
 
         // Adding field type specific parameters if any.
-        if ( $parameterProviderRegistry->hasParameterProvider( $fieldDefinition->fieldTypeIdentifier ) )
+        if ( $this->parameterProviderRegistry->hasParameterProvider( $fieldDefinition->fieldTypeIdentifier ) )
         {
-            $params['parameters'] += $parameterProviderRegistry
+            $params['parameters'] += $this->parameterProviderRegistry
                 ->getParameterProvider( $fieldDefinition->fieldTypeIdentifier )
                 ->getViewParameters( $field );
         }
@@ -336,17 +384,6 @@ class ContentExtension extends Twig_Extension
     }
 
     /**
-     * @return \eZ\Publish\Core\FieldType\XmlText\Converter\Html5
-     */
-    protected function getXmlTextConverter()
-    {
-        if ( !isset( $this->xmlTextConverter ) )
-            $this->xmlTextConverter = $this->container->get( "ezpublish.fieldType.ezxmltext.converter.html5" );
-
-        return $this->xmlTextConverter;
-    }
-
-    /**
      * Implements the "xmltext_to_html5" filter
      *
      * @param string $xmlData
@@ -355,7 +392,31 @@ class ContentExtension extends Twig_Extension
      */
     public function xmltextToHtml5( $xmlData )
     {
-        return $this->getXmlTextConverter()->convert( $xmlData );
+        return $this->xmlTextConverter->convert( $xmlData );
+    }
+
+    /**
+     * Implements the "richtext_to_html5" filter
+     *
+     * @param \DOMDocument $xmlData
+     *
+     * @return string
+     */
+    public function richTextToHtml5( $xmlData )
+    {
+        return $this->richTextConverter->convert( $xmlData )->saveHTML();
+    }
+
+    /**
+     * Implements the "richtext_to_html5_edit" filter
+     *
+     * @param \DOMDocument $xmlData
+     *
+     * @return string
+     */
+    public function richTextToHtml5Edit( $xmlData )
+    {
+        return $this->richTextEditConverter->convert( $xmlData )->saveHTML();
     }
 
     /**
@@ -369,9 +430,6 @@ class ContentExtension extends Twig_Extension
      */
     public function getImageVariation( Field $field, VersionInfo $versionInfo, $variationName )
     {
-        if ( !isset( $this->imageVariationService ) )
-            $this->imageVariationService = $this->container->get( 'ezpublish.fieldType.ezimage.variation_service' );
-
         return $this->imageVariationService->getVariation( $field, $versionInfo, $variationName );
     }
 
@@ -521,9 +579,7 @@ class ContentExtension extends Twig_Extension
      */
     protected function getFieldTypeIdentifier( Content $content, Field $field )
     {
-        /** @var $repository \eZ\Publish\API\Repository\Repository */
-        $repository = $this->container->get( 'ezpublish.api.repository' );
-        $contentType = $repository->getContentTypeService()->loadContentType(
+        $contentType = $this->repository->getContentTypeService()->loadContentType(
             $content->getVersionInfo()->getContentInfo()->contentTypeId
         );
         $key = $contentType->identifier . '  ' . $field->fieldDefIdentifier;

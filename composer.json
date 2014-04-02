@@ -42,7 +42,9 @@
         "kriswallsmith/buzz": ">=0.9",
         "tedivm/stash-bundle": "0.2.*",
         "sensio/distribution-bundle": "~2.3",
-        "pagerfanta/pagerfanta": "~1.0"
+        "nelmio/cors-bundle": "@dev",
+        "pagerfanta/pagerfanta": "~1.0",
+        "ocramius/proxy-manager": "0.5.*"
     },
     "require-dev": {
         "ezsystems/ezpublish-legacy": "@dev",
@@ -51,7 +53,9 @@
         "matthiasnoback/symfony-dependency-injection-test": "0.2.*"
     },
     "replace": {
-        "ezsystems/ezpublish": "*"
+        "ezsystems/ezpublish": "*",
+        "ezsystems/ezpublish-api": "self.version",
+        "ezsystems/ezpublish-spi": "self.version"
     },
     "autoload": {
         "psr-0": {

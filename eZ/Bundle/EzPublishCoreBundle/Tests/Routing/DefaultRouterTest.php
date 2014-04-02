@@ -2,7 +2,7 @@
 /**
  * File containing the DefaultRouterTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -31,11 +31,6 @@ class DefaultRouterTest extends \PHPUnit_Framework_TestCase
         parent::setUp();
         $this->container = $this->getMock( 'Symfony\\Component\\DependencyInjection\\ContainerInterface' );
         $this->configResolver = $this->getMock( 'eZ\\Publish\\Core\\MVC\\ConfigResolverInterface' );
-        $this->container
-            ->expects( $this->any() )
-            ->method( 'get' )
-            ->with( 'ezpublish.config.resolver' )
-            ->will( $this->returnValue( $this->configResolver ) );
     }
 
     /**
@@ -45,11 +40,13 @@ class DefaultRouterTest extends \PHPUnit_Framework_TestCase
      */
     private function generateRouter( array $mockedMethods = array() )
     {
-        return $this
+        $router = $this
             ->getMockBuilder( 'eZ\\Bundle\\EzPublishCoreBundle\\Routing\\DefaultRouter' )
             ->setConstructorArgs( array( $this->container, 'foo' ) )
-            ->setMethods( $mockedMethods )
+            ->setMethods( array_merge( $mockedMethods ) )
             ->getMock();
+        $router->setConfigResolver( $this->configResolver );
+        return $router;
     }
 
     public function testMatchRequestWithSemanticPathinfo()
@@ -78,6 +75,8 @@ class DefaultRouterTest extends \PHPUnit_Framework_TestCase
 
         $request = Request::create( $pathinfo );
 
+        $this->configResolver->expects( $this->never() )->method( 'getParameter' );
+
         /** @var \PHPUnit_Framework_MockObject_MockObject|DefaultRouter $router */
         $router = $this->generateRouter( array( 'match' ) );
         $router
@@ -89,7 +88,7 @@ class DefaultRouterTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Symfony\Component\Routing\Exception\ResourceNotFoundException
+     * @expectedException \Symfony\Component\Routing\Exception\ResourceNotFoundException
      */
     public function testMatchRequestLegacyMode()
     {
@@ -128,18 +127,14 @@ class DefaultRouterTest extends \PHPUnit_Framework_TestCase
         $router = $this->generateRouter( array( 'match' ) );
         $router->setLegacyAwareRoutes( array( 'my_legacy_aware_route' ) );
 
-        $this->configResolver
-            ->expects( $this->once() )
-            ->method( 'getParameter' )
-            ->with( 'legacy_mode' )
-            ->will( $this->returnValue( true ) );
-
         $matchedParameters = array( '_route' => 'my_legacy_aware_route' );
         $router
             ->expects( $this->once() )
             ->method( 'match' )
             ->with( $semanticPathinfo )
             ->will( $this->returnValue( $matchedParameters ) );
+
+        $this->configResolver->expects( $this->never() )->method( 'getParameter' );
 
         $this->assertSame( $matchedParameters, $router->matchRequest( $request ) );
     }

@@ -2,7 +2,7 @@
 /**
  * File containing the SiteAccessListenerTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -12,6 +12,7 @@ namespace eZ\Bundle\EzPublishCoreBundle\Tests\EventListener;
 use eZ\Bundle\EzPublishCoreBundle\EventListener\SiteAccessListener;
 use eZ\Publish\Core\MVC\Symfony\Event\PostSiteAccessMatchEvent;
 use eZ\Publish\Core\MVC\Symfony\MVCEvents;
+use eZ\Publish\Core\MVC\Symfony\Security\HttpUtils;
 use eZ\Publish\Core\MVC\Symfony\SiteAccess;
 use PHPUnit_Framework_TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,7 +52,8 @@ class SiteAccessListenerTest extends PHPUnit_Framework_TestCase
             ->getMockBuilder( 'eZ\Publish\Core\MVC\Symfony\Routing\Generator\UrlAliasGenerator' )
             ->disableOriginalConstructor()
             ->getMock();
-        $this->listener = new SiteAccessListener( $this->container, $this->router, $this->generator );
+        $this->listener = new SiteAccessListener( $this->router, $this->generator, new HttpUtils() );
+        $this->listener->setContainer( $this->container );
     }
 
     public function testGetSubscribedEvents()

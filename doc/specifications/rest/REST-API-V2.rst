@@ -112,6 +112,27 @@ situation, the prefix /api/ezp/v2 is used in all REST hrefs.
 Remember in any case that URIs to REST resources should never be generated manually, but obtained from earlier REST
  calls.
 
+OPTIONS requests
+----------------
+
+Any resource URI the REST API responds to will respond to an OPTIONS request.
+
+The Response will contain an Allow header, that as specified in chapter 14.7 of RFC 2616 will list the methods
+accepted by the resource.
+
+Example
+~~~~~~~
+
+.. code:: http
+
+    OPTIONS /content/objects/1 HTTP/1.1
+    Host: api.example.net
+
+.. code:: http
+
+    HTTP/1.1 200 OK
+    Allow: PATCH,GET,DELETE,COPY
+
 Authentication
 ==============
 
@@ -145,11 +166,6 @@ If activated the user has to login to use this and the client has to send the se
 
 Example request header:
     Cookie: <SessionName> : <sessionID>
-
-is_logged_in cookie
-~~~~~~~~~~~~~~~~~~~
-Session auth currently requires the `is_logged_in` cookie to be provided with every authenticated request.
-This cookie will be sent in reply to a successful session authentication.
 
 CSRF
 ~~~~
@@ -301,17 +317,28 @@ XML Example
 .. code:: xml
 
     <?xml version="1.0" encoding="UTF-8"?>
-    <Root>
-      <content href="/content/objects" media-type=""/>
-      <contentTypes href="/content/types" media-type="application/vnd.ez.api.ContentTypeInfoList+xml"/>
-      <users href="/user/users" media-type="application/vnd.ez.api.UserRefList+xml"/>
-      <roles href="/user/roles" media-type="application/vnd.ez.api.RoleList+xml"/>
-      <rootLocation href="/content/locations/1" media-type="application/vnd.ez.api.Location+xml"/>
-      <rootUserGroup href="/user/groups/1/3" media-type="application/vnd.ez.api.UserGroup+xml"/>
-      <rootMediaFolder href="/content/locations/1/43" media-type="application/vnd.ez.api.Location+xml"/>
-      <trash href="/content/trash" media-type="application/vnd.ez.api.LocationList+xml"/>
-      <sections href="/content/sections" media-type="application/vnd.ez.api.SectionList+xml"/>
-      <views href="/content/views" media-type="application/vnd.ez.api.RefList+xml"/>
+    <Root media-type="application/vnd.ez.api.Root+xml">
+        <content media-type="" href="/api/ezp/v2/content/objects"/>
+        <contentByRemoteId media-type="" href="/api/ezp/v2/content/objects?{&amp;remoteId}"/>
+        <contentTypes media-type="application/vnd.ez.api.ContentTypeInfoList+xml" href="/api/ezp/v2/content/types"/>
+        <contentTypeByIdentifier media-type="" href="/api/ezp/v2/content/types?{&amp;identifier}"/>
+        <contentTypeGroups media-type="application/vnd.ez.api.ContentTypeGroupList+xml" href="/api/ezp/v2/content/typegroups"/>
+        <contentTypeGroupByIdentifier media-type="" href="/api/ezp/v2/content/typegroups?{&amp;identifier}"/>
+        <users media-type="application/vnd.ez.api.UserRefList+xml" href="/api/ezp/v2/user/users"/>
+        <roles media-type="application/vnd.ez.api.RoleList+xml" href="/api/ezp/v2/user/roles"/>
+        <rootLocation media-type="application/vnd.ez.api.Location+xml" href="/api/ezp/v2/content/locations/1/2"/>
+        <rootUserGroup media-type="application/vnd.ez.api.UserGroup+xml" href="/api/ezp/v2/user/groups/1/5"/>
+        <rootMediaFolder media-type="application/vnd.ez.api.Location+xml" href="/api/ezp/v2/content/locations/1/43"/>
+        <locationByRemoteId media-type="" href="/api/ezp/v2/content/locations?{&amp;remoteId}"/>
+        <locationByPath media-type="" href="/api/ezp/v2/content/locations?{&amp;locationPath}"/>
+        <trash media-type="application/vnd.ez.api.Trash+xml" href="/api/ezp/v2/content/trash"/>
+        <sections media-type="application/vnd.ez.api.SectionList+xml" href="/api/ezp/v2/content/sections"/>
+        <views media-type="application/vnd.ez.api.RefList+xml" href="/api/ezp/v2/content/views"/>
+        <objectStateGroups media-type="application/vnd.ez.api.ObjectStateGroupList+xml" href="/api/ezp/v2/content/objectstategroups"/>
+        <objectStates media-type="application/vnd.ez.api.ObjectStateList+xml" href="/api/ezp/v2/content/objectstategroups/{objectStateGroupId}/objectstates"/>
+        <globalUrlAliases media-type="application/vnd.ez.api.UrlAliasRefList+xml" href="/api/ezp/v2/content/urlaliases"/>
+        <urlWildcards media-type="application/vnd.ez.api.UrlWildcardList+xml" href="/api/ezp/v2/content/urlwildcards"/>
+        <createSession media-type="application/vnd.ez.api.UserSession+xml" href="/api/ezp/v2/user/sessions"/>
     </Root>
 
 JSON Example
@@ -332,47 +359,94 @@ JSON Example
 .. code:: javascript
 
     {
-      "Root": {
-        "content": { "_href": "/content/objects" },
-        "contentTypes": {
-          "_href": "/content/types",
-          "_media-type": "application/vnd.ez.api.ContentTypeInfoList+json"
-        },
-        "users": {
-          "_href": "/user/users",
-          "_media-type": "application/vnd.ez.api.UserRefList+json"
-        },
-        "roles": {
-          "_href": "/user/roles",
-          "_media-type": "application/vnd.ez.api.RoleList+json"
-        },
-        "rootLocation": {
-          "_href": "/content/locations/1",
-          "_media-type": "application/vnd.ez.api.Location+json"
-        },
-        "rootUserGroup": {
-          "_href": "/user/groups/1/5",
-          "_media-type": "application/vnd.ez.api.UserGroup+json"
-        },
-        "rootMediaFolder": {
-          "_href": "/content/locations/1/43",
-          "_media-type": "application/vnd.ez.api.Location+json"
+        "Root": {
+            "_media-type": "application/vnd.ez.api.Root+json",
+            "content": {
+                "_href": "/api/ezp/v2/content/objects",
+                "_media-type": ""
+            },
+            "contentByRemoteId": {
+                "_href": "/api/ezp/v2/content/objects?{&remoteId}",
+                "_media-type": ""
+            },
+            "contentTypeByIdentifier": {
+                "_href": "/api/ezp/v2/content/types?{&identifier}",
+                "_media-type": ""
+            },
+            "contentTypeGroupByIdentifier": {
+                "_href": "/api/ezp/v2/content/typegroups?{&identifier}",
+                "_media-type": ""
+            },
+            "contentTypeGroups": {
+                "_href": "/api/ezp/v2/content/typegroups",
+                "_media-type": "application/vnd.ez.api.ContentTypeGroupList+json"
+            },
+            "contentTypes": {
+                "_href": "/api/ezp/v2/content/types",
+                "_media-type": "application/vnd.ez.api.ContentTypeInfoList+json"
+            },
+            "createSession": {
+                "_href": "/api/ezp/v2/user/sessions",
+                "_media-type": "application/vnd.ez.api.UserSession+json"
+            },
+            "globalUrlAliases": {
+                "_href": "/api/ezp/v2/content/urlaliases",
+                "_media-type": "application/vnd.ez.api.UrlAliasRefList+json"
+            },
+            "locationByPath": {
+                "_href": "/api/ezp/v2/content/locations?{&locationPath}",
+                "_media-type": ""
+            },
+            "locationByRemoteId": {
+                "_href": "/api/ezp/v2/content/locations?{&remoteId}",
+                "_media-type": ""
+            },
+            "objectStateGroups": {
+                "_href": "/api/ezp/v2/content/objectstategroups",
+                "_media-type": "application/vnd.ez.api.ObjectStateGroupList+json"
+            },
+            "objectStates": {
+                "_href": "/api/ezp/v2/content/objectstategroups/{objectStateGroupId}/objectstates",
+                "_media-type": "application/vnd.ez.api.ObjectStateList+json"
+            },
+            "roles": {
+                "_href": "/api/ezp/v2/user/roles",
+                "_media-type": "application/vnd.ez.api.RoleList+json"
+            },
+            "rootLocation": {
+                "_href": "/api/ezp/v2/content/locations/1/2",
+                "_media-type": "application/vnd.ez.api.Location+json"
+            },
+            "rootMediaFolder": {
+                "_href": "/api/ezp/v2/content/locations/1/43",
+                "_media-type": "application/vnd.ez.api.Location+json"
+            },
+            "rootUserGroup": {
+                "_href": "/api/ezp/v2/user/groups/1/5",
+                "_media-type": "application/vnd.ez.api.UserGroup+json"
+            },
+            "sections": {
+                "_href": "/api/ezp/v2/content/sections",
+                "_media-type": "application/vnd.ez.api.SectionList+json"
+            },
+            "trash": {
+                "_href": "/api/ezp/v2/content/trash",
+                "_media-type": "application/vnd.ez.api.Trash+json"
+            },
+            "urlWildcards": {
+                "_href": "/api/ezp/v2/content/urlwildcards",
+                "_media-type": "application/vnd.ez.api.UrlWildcardList+json"
+            },
+            "users": {
+                "_href": "/api/ezp/v2/user/users",
+                "_media-type": "application/vnd.ez.api.UserRefList+json"
+            },
+            "views": {
+                "_href": "/api/ezp/v2/content/views",
+                "_media-type": "application/vnd.ez.api.RefList+json"
+            }
         }
-        "trash": {
-          "_href": "/content/trash",
-          "_media-type": "application/vnd.ez.api.LocationList+json"
-        },
-        "sections": {
-          "_href": "/content/sections",
-          "_media-type": "application/vnd.ez.api.SectionList+json"
-        }
-        "sections": {
-          "_href": "/content/views",
-          "_media-type": "application/vnd.ez.api.ViewList+json"
-        }
-      }
     }
-
 
 Managing content
 ~~~~~~~~~~~~~~~~

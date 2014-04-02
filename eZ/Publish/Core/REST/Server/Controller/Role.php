@@ -2,7 +2,7 @@
 /**
  * File containing the Role controller class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -194,9 +194,9 @@ class Role extends RestController
     {
         $loadedRole = $this->roleService->loadRole( $roleId );
 
-        foreach ( $loadedRole->getPolicies() as $rolePolicy )
+        foreach ( $loadedRole->getPolicies() as $policy )
         {
-            $this->roleService->removePolicy( $loadedRole, $rolePolicy );
+            $this->roleService->deletePolicy( $policy );
         }
 
         return new Values\NoContent();
@@ -332,7 +332,7 @@ class Role extends RestController
 
         if ( $policy !== null )
         {
-            $this->roleService->removePolicy( $role, $policy );
+            $this->roleService->deletePolicy( $policy );
             return new Values\NoContent();
         }
 

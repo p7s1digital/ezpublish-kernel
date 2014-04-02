@@ -2,7 +2,7 @@
 /**
  * File containing the DefaultRouter class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -14,11 +14,9 @@ use eZ\Publish\Core\MVC\Symfony\SiteAccess;
 use eZ\Publish\Core\MVC\Symfony\SiteAccess\SiteAccessAware;
 use eZ\Publish\Core\MVC\Symfony\SiteAccess\URILexer;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\RequestContext;
 
 /**
  * Extension of Symfony default router implementing RequestMatcherInterface
@@ -35,14 +33,13 @@ class DefaultRouter extends Router implements RequestMatcherInterface, SiteAcces
     protected $legacyAwareRoutes = array();
 
     /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface
+     * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
      */
-    protected $serviceContainer;
+    protected $configResolver;
 
-    public function __construct( ContainerInterface $container, $resource, array $options = array(), RequestContext $context = null )
+    public function setConfigResolver( ConfigResolverInterface $configResolver )
     {
-        $this->serviceContainer = $container;
-        parent::__construct( $container, $resource, $options, $context );
+        $this->configResolver = $configResolver;
     }
 
     public function setSiteAccess( SiteAccess $siteAccess = null )
@@ -72,14 +69,6 @@ class DefaultRouter extends Router implements RequestMatcherInterface, SiteAcces
     }
 
     /**
-     * @return ConfigResolverInterface
-     */
-    protected function getConfigResolver()
-    {
-        return $this->serviceContainer->get( 'ezpublish.config.resolver' );
-    }
-
-    /**
      * @param \Symfony\Component\HttpFoundation\Request $request The request to match
      *
      * @return array An array of parameters
@@ -99,9 +88,9 @@ class DefaultRouter extends Router implements RequestMatcherInterface, SiteAcces
         }
 
         if (
-            $this->getConfigResolver()->getParameter( 'legacy_mode' ) === true
-            && isset( $attributes['_route'] )
+            isset( $attributes['_route'] )
             && !$this->isLegacyAwareRoute( $attributes['_route'] )
+            && $this->configResolver->getParameter( 'legacy_mode' ) === true
         )
         {
             throw new ResourceNotFoundException( "Legacy mode activated, default router is bypassed" );

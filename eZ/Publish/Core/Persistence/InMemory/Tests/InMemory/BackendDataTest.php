@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Persistence\InMemory\BackendDataTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -274,6 +274,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
         $list = $this->backend->find(
             'Content',
             array( 'id' => 1 ),
+            array(),
             array(
                 'versionInfo' => array(
                     'type' => 'Content\\VersionInfo',
@@ -324,6 +325,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
         $list = $this->backend->find(
             'Content',
             array( "versionInfo" => array( 'id' => 2 ) ),
+            array(),
             array(
                 'versionInfo' => array(
                     'type' => 'Content\\VersionInfo',
@@ -384,6 +386,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
         $list = $this->backend->find(
             'Content',
             array( "versionInfo" => array( 'id' => 2 ) ),
+            array(),
             array(
                 'versionInfo' => array(
                     'type' => 'Content\\VersionInfo',
@@ -430,6 +433,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
         $this->backend->find(
             'Content',
             array( "locations" => array( 'contentId' => 2 ) ),
+            array(),
             array(
                 'locations' => array(
                     'type' => 'Content\\Location',
@@ -455,6 +459,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
             array(
                 "id" => 1,
             ),
+            array(),
             array(
                 'versionInfo' => array(
                     'type' => 'Content\\VersionInfo',
@@ -555,6 +560,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
             $this->backend->count(
                 'Content',
                 array( "versionInfo" => array( 'id' => 2 ) ),
+                array(),
                 array(
                     'versionInfo' => array(
                         'type' => 'Content\\VersionInfo',
@@ -585,6 +591,7 @@ class BackendDataTest extends PHPUnit_Framework_TestCase
         $this->backend->count(
             'Content',
             array( "locations" => array( 'contentId' => 2 ) ),
+            array(),
             array(
                 'locations' => array(
                     'type' => 'Content\\Location',

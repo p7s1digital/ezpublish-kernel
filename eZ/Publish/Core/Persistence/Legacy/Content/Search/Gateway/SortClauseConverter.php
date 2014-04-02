@@ -2,7 +2,7 @@
 /**
  * File containing the EzcDatabase sort clause converter class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -36,8 +36,6 @@ class SortClauseConverter
      * Construct from an optional array of sort clause handlers
      *
      * @param array $handlers
-     *
-     * @return void
      */
     public function __construct( array $handlers = array() )
     {
@@ -50,7 +48,7 @@ class SortClauseConverter
      * @param \ezcQuerySelect $query
      * @param array $sortClauses
      *
-     * @return void
+     * @throws \RuntimeException
      */
     public function applySelect( ezcQuerySelect $query, array $sortClauses )
     {
@@ -78,7 +76,7 @@ class SortClauseConverter
      * @param \ezcQuerySelect $query
      * @param array $sortClauses
      *
-     * @return void
+     * @throws \RuntimeException
      */
     public function applyJoin( ezcQuerySelect $query, array $sortClauses )
     {
@@ -101,11 +99,8 @@ class SortClauseConverter
      * Apply order by parts of sort clauses to query
      *
      * @param \ezcQuerySelect $query
-     * @param array $sortClauses
-     *
-     * @return void
      */
-    public function applyOrderBy( ezcQuerySelect $query, array $sortClauses )
+    public function applyOrderBy( ezcQuerySelect $query )
     {
         foreach ( $this->sortColumns as $column => $direction )
         {

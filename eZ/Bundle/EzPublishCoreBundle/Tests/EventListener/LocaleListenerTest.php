@@ -2,7 +2,7 @@
 /**
  * File containing the LocaleListenerTest class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -20,11 +20,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class LocaleListenerTest extends PHPUnit_Framework_TestCase
 {
-    /**
-     * @var ContainerInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $container;
-
     /**
      * @var LocaleConverterInterface|\PHPUnit_Framework_MockObject_MockObject
      */
@@ -48,12 +43,6 @@ class LocaleListenerTest extends PHPUnit_Framework_TestCase
      */
     public function testOnKernelRequest( array $configuredLanguages, array $convertedLocalesValueMap, $expectedLocale )
     {
-        $this->container
-            ->expects( $this->once() )
-            ->method( 'get' )
-            ->with( 'ezpublish.config.resolver' )
-            ->will( $this->returnValue( $this->configResolver ) );
-
         $this->configResolver
             ->expects( $this->once() )
             ->method( 'getParameter' )
@@ -68,7 +57,7 @@ class LocaleListenerTest extends PHPUnit_Framework_TestCase
 
         $defaultLocale = 'en';
         $localeListener = new LocaleListener( $defaultLocale );
-        $localeListener->setServiceContainer( $this->container );
+        $localeListener->setConfigResolver( $this->configResolver );
         $localeListener->setLocaleConverter( $this->localeConverter );
 
         $request = new Request();

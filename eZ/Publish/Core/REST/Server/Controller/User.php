@@ -2,7 +2,7 @@
 /**
  * File containing the User controller class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -31,6 +31,8 @@ use eZ\Publish\API\Repository\Exceptions\InvalidArgumentException;
 use eZ\Publish\Core\REST\Common\Exceptions\NotFoundException AS RestNotFoundException;
 use eZ\Publish\Core\REST\Server\Exceptions\ForbiddenException;
 use eZ\Publish\Core\Base\Exceptions\UnauthorizedException;
+use eZ\Publish\Core\MVC\Symfony\Security\User as CoreUser;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 /**
  * User controller
@@ -146,12 +148,15 @@ class User extends RestController
         $userGroupContentInfo = $userGroup->getVersionInfo()->getContentInfo();
         $contentType = $this->contentTypeService->loadContentType( $userGroupContentInfo->contentTypeId );
 
-        return new Values\RestUserGroup(
-            $userGroup,
-            $contentType,
-            $userGroupContentInfo,
-            $userGroupLocation,
-            $this->contentService->loadRelations( $userGroup->getVersionInfo() )
+        return new Values\CachedValue(
+            new Values\RestUserGroup(
+                $userGroup,
+                $contentType,
+                $userGroupContentInfo,
+                $userGroupLocation,
+                $this->contentService->loadRelations( $userGroup->getVersionInfo() )
+            ),
+            array( 'locationId' => $userGroupLocation->id )
         );
     }
 
@@ -170,12 +175,15 @@ class User extends RestController
         $userMainLocation = $this->locationService->loadLocation( $userContentInfo->mainLocationId );
         $contentType = $this->contentTypeService->loadContentType( $userContentInfo->contentTypeId );
 
-        return new Values\RestUser(
-            $user,
-            $contentType,
-            $userContentInfo,
-            $userMainLocation,
-            $this->contentService->loadRelations( $user->getVersionInfo() )
+        return new Values\CachedValue(
+            new Values\RestUser(
+                $user,
+                $contentType,
+                $userContentInfo,
+                $userMainLocation,
+                $this->contentService->loadRelations( $user->getVersionInfo() )
+            ),
+            array( 'locationId' => $userContentInfo->mainLocationId )
         );
     }
 
@@ -712,10 +720,16 @@ class User extends RestController
 
         if ( $this->getMediaType() === 'application/vnd.ez.api.usergrouplist' )
         {
-            return new Values\UserGroupList( $restUserGroups, $this->request->getPathInfo() );
+            return new Values\CachedValue(
+                new Values\UserGroupList( $restUserGroups, $this->request->getPathInfo() ),
+                array( 'locationId' => $userGroupLocation->id )
+            );
         }
 
-        return new Values\UserGroupRefList( $restUserGroups, $this->request->getPathInfo() );
+        return new Values\CachedValue(
+            new Values\UserGroupRefList( $restUserGroups, $this->request->getPathInfo() ),
+            array( 'locationId' => $userGroupLocation->id )
+        );
     }
 
     /**
@@ -748,7 +762,11 @@ class User extends RestController
             );
         }
 
-        return new Values\UserGroupRefList( $restUserGroups, $this->request->getPathInfo(), $userId );
+        return new Values\CachedValue(
+            new Values\UserGroupRefList( $restUserGroups, $this->request->getPathInfo(), $userId ),
+            array( 'locationId' => $user->contentInfo->mainLocationId )
+        );
+
     }
 
     /**
@@ -795,10 +813,16 @@ class User extends RestController
 
         if ( $this->getMediaType() === 'application/vnd.ez.api.userlist' )
         {
-            return new Values\UserList( $restUsers, $this->request->getPathInfo() );
+            return new Values\CachedValue(
+                new Values\UserList( $restUsers, $this->request->getPathInfo() ),
+                array( 'locationId' => $userGroupLocation->id )
+            );
         }
 
-        return new Values\UserRefList( $restUsers, $this->request->getPathInfo() );
+        return new Values\CachedValue(
+            new Values\UserRefList( $restUsers, $this->request->getPathInfo() ),
+            array( 'locationId' => $userGroupLocation->id )
+        );
     }
 
     /**
@@ -944,7 +968,7 @@ class User extends RestController
 
         try
         {
-            $user = $this->userService->loadUserByCredentials(
+            $apiUser = $this->userService->loadUserByCredentials(
                 $sessionInput->login,
                 $sessionInput->password
             );
@@ -957,13 +981,14 @@ class User extends RestController
         /** @var $session \Symfony\Component\HttpFoundation\Session\Session */
         $session = $this->container->get( 'session' );
         /** @var $authenticationToken \Symfony\Component\Security\Core\Authentication\Token\TokenInterface */
-        $authenticationToken = $this->container->get( 'security.context' )->getToken();
+        $securityContext = $this->container->get( 'security.context' );
+        $authenticationToken = $securityContext->getToken();
 
-        if ( $session->isStarted() && $authenticationToken !== null )
+        if ( $session->isStarted() && $authenticationToken !== null && $authenticationToken->getUser() instanceof CoreUser )
         {
-            /** @var $currentUser \eZ\Publish\API\Repository\Values\User\User */
-            $currentUser = $authenticationToken->getUser()->getAPIUser();
-            if ( $user->id == $currentUser->id )
+            /** @var $currentApiUser \eZ\Publish\API\Repository\Values\User\User */
+            $currentApiUser = $authenticationToken->getUser()->getAPIUser();
+            if ( $apiUser->id == $currentApiUser->id )
             {
                 return new Values\SeeOther(
                     $this->router->generate(
@@ -973,8 +998,10 @@ class User extends RestController
                 );
             }
 
-            $anonymousUser = $this->userService->loadAnonymousUser();
-            if ( $currentUser->id != $anonymousUser->id )
+            $anonymousUser = $this->userService->loadUser(
+                $this->container->getParameter( "ezpublish.config.resolver" )->getParameter( "anonymous_user_id" )
+            );
+            if ( $currentApiUser->id != $anonymousUser->id )
             {
                 // Already logged in with another user, this will be converted to HTTP status 409
                 return new Values\Conflict();
@@ -988,9 +1015,17 @@ class User extends RestController
         }
 
         $session->start();
-        $session->set( "eZUserLoggedInID", $user->id );
+        $roles = array( 'ROLE_USER' );
+        $securityContext->setToken(
+            new UsernamePasswordToken(
+                new CoreUser( $apiUser, $roles ),
+                $apiUser->passwordHash,
+                'ezpublish_rest',
+                $roles
+            )
+        );
         return new Values\UserSession(
-            $user,
+            $apiUser,
             $session->getName(),
             $session->getId(),
             isset( $csrfProvider ) ?

@@ -2,7 +2,7 @@
 /**
  * File containing the RoleServiceTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -1017,6 +1017,47 @@ class RoleServiceTest extends BaseTest
         }
         /* END: Use Case */
 
+        $this->assertSame( array(), $role->getPolicies() );
+    }
+
+    /**
+     * Test for the deletePolicy() method.
+     *
+     * @return void
+     * @see \eZ\Publish\API\Repository\RoleService::deletePolicy()
+     * @depends eZ\Publish\API\Repository\Tests\RoleServiceTest::loadRole
+     * @depends eZ\Publish\API\Repository\Tests\RoleServiceTest::testAddPolicy
+     */
+    public function testDeletePolicy()
+    {
+        $repository = $this->getRepository();
+
+        /* BEGIN: Use Case */
+        $roleService = $repository->getRoleService();
+
+        // Instantiate a new role create
+        $roleCreate = $roleService->newRoleCreateStruct( 'newRole' );
+
+        // @todo uncomment when support for multilingual names and descriptions is added
+        // $roleCreate->mainLanguageCode = 'eng-US';
+
+        // Create a new role with two policies
+        $role = $roleService->createRole(
+            $roleCreate,
+            array(
+                $roleService->newPolicyCreateStruct( 'content', 'create' ),
+                $roleService->newPolicyCreateStruct( 'content', 'delete' ),
+            )
+        );
+
+        // Delete all policies from the new role
+        foreach ( $role->getPolicies() as $policy )
+        {
+            $roleService->deletePolicy( $policy );
+        }
+        /* END: Use Case */
+
+        $role = $roleService->loadRole( $role->id );
         $this->assertSame( array(), $role->getPolicies() );
     }
 

@@ -2,7 +2,7 @@
 /**
  * File containing the UserServiceTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -1096,11 +1096,14 @@ class UserServiceTest extends BaseTest
     {
         $repository = $this->getRepository();
 
+        $anonymousUserId = $this->generateId( 'user', 10 );
         /* BEGIN: Use Case */
+        // $anonymousUserId is the ID of the "Anonymous" user in a eZ
+        // Publish demo installation.
         $userService = $repository->getUserService();
 
         // Load default anonymous user available in each eZ Publish installation
-        $anonymousUser = $userService->loadAnonymousUser();
+        $anonymousUser = $userService->loadUser( $anonymousUserId );
         /* END: Use Case */
 
         $this->assertInstanceOf(

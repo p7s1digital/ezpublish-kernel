@@ -2,7 +2,7 @@
 /**
  * File contains: eZ\Publish\Core\Persistence\Legacy\Tests\User\UserHandlerTest class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -593,12 +593,12 @@ class UserHandlerTest extends TestCase
         );
     }
 
-    public function testRemovePolicy()
+    public function testDeletePolicy()
     {
         $handler = $this->getUserHandler();
 
         $role = $this->createRole();
-        $handler->removePolicy( $role->id, $role->policies[0]->id );
+        $handler->deletePolicy( $role->policies[0]->id );
 
         $this->assertQueryResult(
             array(
@@ -609,12 +609,12 @@ class UserHandlerTest extends TestCase
         );
     }
 
-    public function testRemovePolicyLimitations()
+    public function testDeletePolicyLimitations()
     {
         $handler = $this->getUserHandler();
 
         $role = $this->createRole();
-        $handler->removePolicy( $role->id, $role->policies[0]->id );
+        $handler->deletePolicy( $role->policies[0]->id );
 
         $this->assertQueryResult(
             array( array( 3, 'Foo', 2 ) ),
@@ -622,12 +622,12 @@ class UserHandlerTest extends TestCase
         );
     }
 
-    public function testRemovePolicyLimitationValues()
+    public function testDeletePolicyLimitationValues()
     {
         $handler = $this->getUserHandler();
 
         $role = $this->createRole();
-        $handler->removePolicy( $role->id, $role->policies[0]->id );
+        $handler->deletePolicy( $role->policies[0]->id );
 
         $this->assertQueryResult(
             array( array( 4, 3, 'Blubb' ) ),

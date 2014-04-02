@@ -2,7 +2,7 @@
 /**
  * File containing the Kernel class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -29,6 +29,11 @@ abstract class Kernel extends BaseKernel
     const USER_HASH_ACCEPT_HEADER = 'application/vnd.ez.UserHash+text';
 
     /**
+     * Prefix for session name.
+     */
+    const SESSION_NAME_PREFIX = 'eZSESSID';
+
+    /**
      * Generated user hash.
      *
      * @var string
@@ -36,7 +41,7 @@ abstract class Kernel extends BaseKernel
     private $userHash;
 
     /**
-     * @var Pool
+     * @var \Stash\Pool
      */
     private $cachePool;
 
@@ -78,7 +83,7 @@ abstract class Kernel extends BaseKernel
 
     /**
      * Checks if current request is allowed to generate the user hash.
-     * Default behavior is to only accept local IP addresses:
+     * Default behavior is to accept values set in TRUSTED_PROXIES env variable and local IP addresses:
      *  - 127.0.0.1
      *  - ::1
      *  - fe80::1
@@ -89,9 +94,19 @@ abstract class Kernel extends BaseKernel
      */
     protected function canGenerateUserHash( Request $request )
     {
+        $trustedProxies = array_unique(
+            array_merge(
+                Request::getTrustedProxies(),
+                array(
+                    '127.0.0.1',
+                    '::1',
+                    'fe80::1'
+                )
+            )
+        );
         return
             $request->attributes->get( 'internalRequest' )
-            || in_array( $request->getClientIp(), array( '127.0.0.1', '::1', 'fe80::1' ) );
+            || in_array( $request->getClientIp(), $trustedProxies );
     }
 
     /**
@@ -109,8 +124,10 @@ abstract class Kernel extends BaseKernel
         // X-User-Hash is purely internal and should never be used from outside
         $request->headers->remove( 'X-User-Hash' );
 
-        if ( !$request->cookies->has( 'is_logged_in' ) )
+        if ( $this->isAnonymous( $request ) )
+        {
             return $this->userHash = static::ANONYMOUS_HASH;
+        }
 
         // We must have a session at that point since we're supposed to be connected, so HTTP_COOKIE must contain session id.
         // HTTP_COOKIE header will be used as cache key to store the user hash.
@@ -137,6 +154,26 @@ abstract class Kernel extends BaseKernel
 
         // Store the user hash in memory for sub-requests (processed in the same thread).
         return $this->userHash;
+    }
+
+    /**
+     * Checks if current request is considered anonymous.
+     *
+     * @param Request $request
+     *
+     * @return bool
+     */
+    protected function isAnonymous( Request $request )
+    {
+        foreach ( $request->cookies as $name => $value )
+        {
+            if ( strpos( $name, static::SESSION_NAME_PREFIX ) === 0 )
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

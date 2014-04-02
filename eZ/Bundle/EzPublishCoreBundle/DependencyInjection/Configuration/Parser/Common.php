@@ -2,7 +2,7 @@
 /**
  * File containing the Common class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -77,6 +77,10 @@ class Common extends AbstractParser
                 ->info( 'The session name. If you want a session name per siteaccess, use "{siteaccess_hash}" token. Will override default session name from framework.session.name' )
                 ->example( array( 'session_name' => 'eZSESSID{siteaccess_hash}' ) )
             ->end()
+            ->scalarNode( 'index_page' )
+                ->info( "The page that the index page will show. Default value is null." )
+                ->example( '/Getting-Started' )
+                ->end()
             ->arrayNode( 'http_cache' )
                 ->info( 'Settings related to Http cache' )
                 ->cannotBeEmpty()
@@ -86,6 +90,23 @@ class Common extends AbstractParser
                         ->example( array( 'http://localhost/', 'http://another.server/' ) )
                         ->requiresAtLeastOneElement()
                         ->prototype( 'scalar' )->end()
+                    ->end()
+                ->end()
+            ->end()
+            ->scalarNode( 'anonymous_user_id' )
+                ->cannotBeEmpty()
+                ->example( '10' )
+                ->info( 'The ID of the user used for everyone who is not logged in.' )
+            ->end()
+            ->arrayNode( 'user' )
+                ->children()
+                    ->scalarNode( 'layout' )
+                        ->info( 'Layout template to use for user related actions. This is most likely the base pagelayout template of your site.' )
+                        ->example( array( 'layout' => 'eZDemoBundle::pagelayout.html.twig' ) )
+                    ->end()
+                    ->scalarNode( 'login_template' )
+                        ->info( 'Template to use for login form. Defaults to EzPublishCoreBundle:security:login.html.twig' )
+                        ->example( array( 'login_template' => 'AcmeTestBundle:User:login.html.twig' ) )
                     ->end()
                 ->end()
             ->end();
@@ -145,6 +166,14 @@ class Common extends AbstractParser
                 $container->setParameter( "ezsettings.$sa.session_name", $settings['session_name'] );
             if ( isset( $settings['http_cache']['purge_servers'] ) )
                 $container->setParameter( "ezsettings.$sa.http_cache.purge_servers", $settings['http_cache']['purge_servers'] );
+            if ( isset( $settings['anonymous_user_id'] ) )
+                $container->setParameter( "ezsettings.$sa.anonymous_user_id", $settings['anonymous_user_id'] );
+            if ( isset( $settings['user']['layout'] ) )
+                $container->setParameter( "ezsettings.$sa.security.base_layout", $settings['user']['layout'] );
+            if ( isset( $settings['user']['login_template'] ) )
+                $container->setParameter( "ezsettings.$sa.security.login_template", $settings['user']['login_template'] );
+            if ( isset( $settings['index_page'] ) )
+                $container->setParameter( "ezsettings.$sa.index_page", $settings['index_page'] );
         }
     }
 }

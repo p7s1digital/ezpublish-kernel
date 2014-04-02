@@ -2,7 +2,7 @@
 /**
  * RoleService class
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -145,7 +145,10 @@ class RoleService implements RoleServiceInterface
     /**
      * removes a policy from the role
      *
+     * @deprecated since 5.3, use {@link deletePolicy()} instead.
+     *
      * @throws \eZ\Publish\API\Repository\Exceptions\UnauthorizedException if the authenticated user is not allowed to remove a policy
+     * @throws \eZ\Publish\API\Repository\Exceptions\InvalidArgumentException if policy does not belong to the given role
      *
      * @param \eZ\Publish\API\Repository\Values\User\Role $role
      * @param \eZ\Publish\API\Repository\Values\User\Policy $policy the policy to remove from the role
@@ -159,6 +162,27 @@ class RoleService implements RoleServiceInterface
             new RemovePolicySignal(
                 array(
                     'roleId' => $role->id,
+                    'policyId' => $policy->id,
+                )
+            )
+        );
+        return $returnValue;
+    }
+
+    /**
+     * Delete a policy
+     *
+     * @throws \eZ\Publish\API\Repository\Exceptions\UnauthorizedException if the authenticated user is not allowed to remove a policy
+     *
+     * @param \eZ\Publish\API\Repository\Values\User\Policy $policy the policy to delete
+     */
+    public function deletePolicy( Policy $policy )
+    {
+        $returnValue = $this->service->deletePolicy( $policy );
+        $this->signalDispatcher->emit(
+            new RemovePolicySignal(
+                array(
+                    'roleId' => $policy->roleId,
                     'policyId' => $policy->id,
                 )
             )

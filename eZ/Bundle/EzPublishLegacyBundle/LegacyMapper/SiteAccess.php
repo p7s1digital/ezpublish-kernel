@@ -2,7 +2,7 @@
 /**
  * File containing the SiteAccess class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -12,24 +12,14 @@ namespace eZ\Bundle\EzPublishLegacyBundle\LegacyMapper;
 use eZ\Publish\Core\MVC\Legacy\LegacyEvents;
 use eZ\Publish\Core\MVC\Legacy\Event\PreBuildKernelWebHandlerEvent;
 use eZSiteAccess;
+use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Maps the SiteAccess object to the legacy parameters
  */
-class SiteAccess implements EventSubscriberInterface
+class SiteAccess extends ContainerAware implements EventSubscriberInterface
 {
-    /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface
-     */
-    private $container;
-
-    public function __construct( ContainerInterface $container )
-    {
-        $this->container = $container;
-    }
-
     public static function getSubscribedEvents()
     {
         return array(

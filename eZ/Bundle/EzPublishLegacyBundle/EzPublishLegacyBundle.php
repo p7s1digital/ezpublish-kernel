@@ -2,13 +2,14 @@
 /**
  * File containing the EzPublishLegacy class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
 
 namespace eZ\Bundle\EzPublishLegacyBundle;
 
+use eZ\Bundle\EzPublishLegacyBundle\DependencyInjection\Security\SSOFactory;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use eZ\Bundle\EzPublishLegacyBundle\DependencyInjection\Compiler\LegacyPass;
 use eZ\Bundle\EzPublishLegacyBundle\DependencyInjection\Compiler\TwigPass;
@@ -33,5 +34,9 @@ class EzPublishLegacyBundle extends Bundle
         parent::build( $container );
         $container->addCompilerPass( new LegacyPass() );
         $container->addCompilerPass( new TwigPass() );
+
+        /** @var \Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension $securityExtension */
+        $securityExtension = $container->getExtension( 'security' );
+        $securityExtension->addSecurityListenerFactory( new SSOFactory() );
     }
 }

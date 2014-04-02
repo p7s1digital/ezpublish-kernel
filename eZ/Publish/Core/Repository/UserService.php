@@ -2,7 +2,7 @@
 /**
  * File containing the eZ\Publish\Core\Repository\UserService class.
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  * @package eZ\Publish\Core\Repository
@@ -79,7 +79,6 @@ class UserService implements UserServiceInterface
         $this->userHandler = $userHandler;
         // Union makes sure default settings are ignored if provided in argument
         $this->settings = $settings + array(
-            'anonymousUserID' => 10,
             'defaultUserPlacement' => 12,
             'userClassID' => 4,// @todo Rename this settings to swap out "Class" for "Type"
             'userGroupClassID' => 3,
@@ -218,7 +217,7 @@ class UserService implements UserServiceInterface
         $searchQuery->offset = $offset >= 0 ? (int)$offset : 0;
         $searchQuery->limit = $limit >= 0 ? (int)$limit  : null;
 
-        $searchQuery->criterion = new CriterionLogicalAnd(
+        $searchQuery->filter = new CriterionLogicalAnd(
             array(
                 new CriterionContentTypeId( $this->settings['userGroupClassID'] ),
                 new CriterionParentLocationId( $locationId )
@@ -557,6 +556,8 @@ class UserService implements UserServiceInterface
 
     /**
      * Loads anonymous user
+     *
+     * @deprecated since 5.3, use loadUser( $anonymousUserId ) instead
      *
      * @uses loadUser()
      *
@@ -918,7 +919,7 @@ class UserService implements UserServiceInterface
         $searchQuery->offset = 0;
         $searchQuery->limit = null;
 
-        $searchQuery->criterion = new CriterionLogicalAnd(
+        $searchQuery->filter = new CriterionLogicalAnd(
             array(
                 new CriterionContentTypeId( $this->settings['userGroupClassID'] ),
                 new CriterionLocationId( $parentLocationIds )
@@ -960,7 +961,7 @@ class UserService implements UserServiceInterface
 
         $searchQuery = new Query();
 
-        $searchQuery->criterion = new CriterionLogicalAnd(
+        $searchQuery->filter = new CriterionLogicalAnd(
             array(
                 new CriterionContentTypeId( $this->settings['userClassID'] ),
                 new CriterionParentLocationId( $mainGroupLocation->id )

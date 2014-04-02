@@ -2,7 +2,7 @@
 /**
  * File containing the Handler interface
  *
- * @copyright Copyright (C) 1999-2013 eZ Systems AS. All rights reserved.
+ * @copyright Copyright (C) 1999-2014 eZ Systems AS. All rights reserved.
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License v2
  * @version //autogentag//
  */
@@ -18,6 +18,7 @@ use eZ\Publish\Core\Persistence\Legacy\Content\Type\Mapper as TypeMapper;
 use eZ\Publish\Core\Persistence\Legacy\Content\Language\Mapper as LanguageMapper;
 use eZ\Publish\Core\Persistence\Legacy\Content\Location\Handler as LocationHandler;
 use eZ\Publish\Core\Persistence\Legacy\Content\Location\Mapper as LocationMapper;
+use eZ\Publish\Core\Persistence\Legacy\Content\Location\Search\Handler as LocationSearchHandler;
 use eZ\Publish\Core\Persistence\Legacy\Content\Location\Trash\Handler as TrashHandler;
 use eZ\Publish\Core\Persistence\Legacy\Content\ObjectState\Handler as ObjectStateHandler;
 use eZ\Publish\Core\Persistence\Legacy\Content\ObjectState\Mapper as ObjectStateMapper;
@@ -110,6 +111,13 @@ class Handler implements HandlerInterface
      * @var \eZ\Publish\Core\Persistence\Legacy\Content\Location\Handler
      */
     protected $locationHandler;
+
+    /**
+     * Location search handler
+     *
+     * @var \eZ\Publish\Core\Persistence\Legacy\Content\Location\Search\Handler
+     */
+    protected $locationSearchHandler;
 
     /**
      * Location gateway
@@ -481,6 +489,7 @@ class Handler implements HandlerInterface
                         $db,
                         new Content\Search\Gateway\CriteriaConverter(
                             array(
+                                new CriterionHandler\MatchAll( $db ),
                                 new CriterionHandler\ContentId( $db ),
                                 new CriterionHandler\LogicalNot( $db ),
                                 new CriterionHandler\LogicalAnd( $db ),
@@ -531,6 +540,7 @@ class Handler implements HandlerInterface
                                 new CriterionHandler\UserMetadata( $db ),
                                 new CriterionHandler\RelationList( $db ),
                                 new CriterionHandler\Depth( $db ),
+                                new CriterionHandler\MapLocationDistance( $db ),
                             )
                         ),
                         new Content\Search\Gateway\SortClauseConverter(
@@ -545,6 +555,7 @@ class Handler implements HandlerInterface
                                 new SortClauseHandler\ContentName( $db ),
                                 new SortClauseHandler\ContentId( $db ),
                                 new SortClauseHandler\Field( $db, $this->contentLanguageHandler() ),
+                                new SortClauseHandler\MapLocationDistance( $db, $this->contentLanguageHandler() ),
                             )
                         ),
                         new Content\Gateway\EzcDatabase\QueryBuilder( $this->dbHandler ),
@@ -682,6 +693,21 @@ class Handler implements HandlerInterface
             );
         }
         return $this->locationHandler;
+    }
+
+    /**
+     * @return \eZ\Publish\SPI\Persistence\Content\Location\SearchHandler
+     */
+    public function locationSearchHandler()
+    {
+        if ( !isset( $this->locationSearchHandler ) )
+        {
+            $this->locationSearchHandler = new LocationSearchHandler(
+                $this->getLocationGateway(),
+                $this->getLocationMapper()
+            );
+        }
+        return $this->locationSearchHandler;
     }
 
     /**
